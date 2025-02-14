@@ -115,6 +115,9 @@ while t < t_max:
 
     res = 1
     while res > tolerance:
+        # Computes diffusivities
+        D = D1 * (1-alpha) + D2 * alpha
+        D_o = D1 * (1-alpha_o) + D2 * alpha_o
         row = []
         col = []
         val = []
@@ -146,7 +149,7 @@ while t < t_max:
         # interface matching gradients (Fick's second law)
         i = n3 
 
-        D[0] = D1 * (1-alpha) + D2 * alpha
+        
         row += 6 * [i]
         col += [i-3,i-2,i-1,i,i+ej,i+2*ej] # Either side of the boundary stencil
         val += [-D3 / (2 * h3),
@@ -161,12 +164,12 @@ while t < t_max:
         
         for i in range(1,n2-1):
             j = n3 + ej * j # scales up the number of new matrix columns/rows noting that we need extra entries for alpha terms
-
+            D = D1 * (1-alpha) + D2 * alpha
 
             if c2[i] < cs:  # no reaction
+                x2dph = 0.5 * (x2d_nodes[j + 1] + x2d_nodes[j])
+                x2dmh = 0.5 * (x2d_nodes[j] + x2d_nodes[j - 1])
                 
-
-
 
 
 
