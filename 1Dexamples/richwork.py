@@ -349,6 +349,7 @@ while t < tmax:
 
         # solve the matrix problem for this iteration
         print(len(val),len(row),len(col),len(b),n3+n2*nv)
+        np.asarray(val)
         a = sp.sparse.coo_matrix((val, (row, col)), shape=(n3 + n2 * nv, n3 + n2 * nv))
         # system = petsc.PETScSparseLinearSystem(a, b)
         # x = system.linear_solve()
