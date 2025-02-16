@@ -1,6 +1,6 @@
 import numpy as np
 import scipy as sp
-
+import sys 
 # Crank-Nicholson approach to solving reaction diffusion equation in 1 dimension iterating
 
 # Function as in Rich's work for rescaling the coordinates in the metal region to resolve at the interface
@@ -18,7 +18,7 @@ def x_from_X(X):
 # oxide-mesh
 n3 = 51
 # metal-mesh
-n2 = 101
+n2 = 1001
 # Value to skip between rows of matrix
 ej = 2
 
@@ -68,7 +68,7 @@ c3 = np.zeros(n3)
 c2 = np.zeros(n2)
 
 # array of uranium concentrations
-alpha = np.zeros(n2)
+alpha = np.ones(n2)
 
 # array of diffusivities
 D = D2 * np.ones(n2)
@@ -89,7 +89,8 @@ x2_nodes, x2d_nodes = x_from_X(X2_nodes)
 cs = Csstar / Castar # solubility limit
 eps = Castar / N2star
 
-k = 1e6
+k = 1e5
+
 
 # maximum time
 t_max = 20
@@ -109,15 +110,19 @@ step = 1
 
 while t < t_max:
     # old values for crank nicholson
+    t += dt
     c2_o = np.copy(c2)
     c3_o = np.copy(c3)
     alpha_o = np.copy(alpha)
-
+    D_o = np.copy(D)
     res = 1
+    iterations = 0
+
     while res > tolerance:
+        
+        iterations += 1
         # Computes diffusivities
-        D = D1 * (1-alpha) + D2 * alpha
-        D_o = D1 * (1-alpha_o) + D2 * alpha_o
+        
         row = []
         col = []
         val = []
@@ -127,8 +132,8 @@ while t < t_max:
         row += [0]
         col += [0]
         val += [1]
-        b += 1 - c3[0] # c + c_tilde = 1 at surface
-
+        b += [1 - np.exp(-t) - c3[0]] # c + c_tilde = 1 at surface
+        
         # main bulk of the oxide no reaction
 
         for i in range(1,n3-1):
@@ -162,23 +167,178 @@ while t < t_max:
         b += [ D3 * (3 * c3[n3 - 1] - 4 * c3[n3 - 2] + c3[n3 - 3]) / (2 * h3)
                 - D[0] * (-3 * c2[0] + 4 * c2[1] - c2[2]) / (2 * h2 * x2d_nodes[0])]
         
-        for i in range(1,n2-1):
-            j = n3 + ej * j # scales up the number of new matrix columns/rows noting that we need extra entries for alpha terms
-            D = D1 * (1-alpha) + D2 * alpha
+        for i in range(0,n2):
+            j = n3 + ej * i # scales up the number of new matrix columns/rows noting that we need extra entries for alpha terms
+            
+            if (i != 0) and (i != n2-1):
+                if c2[i] < cs:  # no reaction
+                    x2dph = 0.5 * (x2d_nodes[i + 1] + x2d_nodes[i])
+                    x2dmh = 0.5 * (x2d_nodes[i] + x2d_nodes[i - 1])
+                    
+                    row += 3 * [j]
+                    col += [
+                        j - ej,  # c_{j-1}
+                        j,  # c_j
+                        j + ej,  # c_{j+1}
+                    ]
+                    val += [
+                        0.5
+                        * (D[i] + D[i - 1])
+                        / (h2s * x2d_nodes[i] * x2dmh),  # c_{j-1}
 
-            if c2[i] < cs:  # no reaction
-                x2dph = 0.5 * (x2d_nodes[j + 1] + x2d_nodes[j])
-                x2dmh = 0.5 * (x2d_nodes[j] + x2d_nodes[j - 1])
-                
+                        -0.5
+                        * ((D[i + 1] + D[i]) / x2dph + (D[i] + D[i - 1]) / x2dmh)
+                        / (h2s * x2d_nodes[i])
+                        - 2 / dt,  # c_j
 
+                        0.5
+                        * (D[i + 1] + D[i])
+                        / (h2s * x2d_nodes[i] * x2dph),  # c_{j+1}
 
+                        ]
+                        # residuals for Crank-Nicolson method
+                    b += [
+                        2 * (c2[i] - c2[i]) / dt
+                        - 0.5
+                        * (D[i + 1] + D[i])
+                        * (c2[i + 1] - c2[i])
+                        / (h2s * x2d_nodes[i] * x2dph)
+                        + 0.5
+                        * (D[i] + D[i - 1])
+                        * (c2[i] - c2[i - 1])
+                        / (h2s * x2d_nodes[i] * x2dmh)
+                        # old time values for Crank-Nicolson
+                        - 0.5
+                        * (D_o[i + 1] + D_o[i])
+                        * (c2_o[i + 1] - c2_o[i])
+                        / (h2s * x2d_nodes[i] * x2dph)
+                        + 0.5
+                        * (D_o[i] + D_o[i - 1])
+                        * (c2_o[i] - c2_o[i - 1])
+                        / (h2s * x2d_nodes[i] * x2dmh)
+                    ]
+                else:
+                    # [H] diffusion equation, reaction is active
+                        # with local duffisivity D[i] = D2*alpha[i] + D1*(1-alpha[i])
+                    row += 4 * [j]
+                    col += [
+                        j - ej,  # c_{j-1}
+                        
+                        j,  # c_j
+                        j + 1,  # alpha_j
+                        
+                        j + ej,  # c_{j+1}
+                        
+                    ]
+                    val += [
+                        0.5
+                        * (D[i] + D[i - 1])
+                        / (h2s * x2d_nodes[i] * x2dmh),  # c_{j-1}
+            
+                        -0.5
+                        * ((D[i + 1] + D[i]) / x2dph + (D[i] + D[i - 1]) / x2dmh)
+                        / (h2s * x2d_nodes[i])
+                        - 2 / dt
+                        - 3 * k * (3 * (c2[i] - cs) ** 2 * alpha[i]),  # c_j
+
+                        -3 * k * (c2[i] - cs) ** 3,  # alpha_j
+                        
+                        0.5
+                        * (D[i + 1] + D[i])
+                        / (h2s * x2d_nodes[i] * x2dph),  # c_{j+1}
+                        
+                    ]
+                    # residuals for Crank-Nicolson method
+                    b += [
+                        2 * (c2[i] - c2_o[i]) / dt
+                        - 0.5
+                        * (D[i + 1] + D[i])
+                        * (c2[i + 1] - c2[i])
+                        / (h2s * x2d_nodes[i] * x2dph)
+                        + 0.5
+                        * (D[i] + D[i - 1])
+                        * (c2[i] - c2[i - 1])
+                        / (h2s * x2d_nodes[i] * x2dmh)
+                        + 3 * k * ((c2[i] - cs) ** 3) * alpha[i]
+                        # old values for Crank-Nicolson
+                        - 0.5
+                        * (D_o[i + 1] + D_o[i])
+                        * (c2_o[i + 1] - c2_o[i])
+                        / (h2s * x2d_nodes[i] * x2dph)
+                        + 0.5
+                        * (D_o[i] + D_o[i - 1])
+                        * (c2_o[i] - c2_o[i - 1])
+                        / (h2s * x2d_nodes[i] * x2dmh)
+                        + 3 * k * ((c2_o[i] - cs) ** 3) * alpha_o[i]
+                    ]
+
+    #
+                ########################
+                # CONSUMPTION OF U EQN #
+                ########################
+                #
+            if c2[i] > cs:
+                # [alpha] equation, reaction is active
+                #
+                #
+                row += 2 * [j + 1]
+                col += [j, j + 1]  # c_{j},alpha_j
+                val += [
+                    -eps * k * (3 * (c2[i] - cs) ** 2 * alpha[i]),
+                    -eps * k * (c2[i] - cs) ** 3 - 2 / dt,
+                ]
+                # residuals for a Crank-Nicolson method
+                b += [
+                    2 * (alpha[i] - alpha_o[i]) / dt
+                    + eps * k * ((c2[i] - cs) ** 3) * alpha[i]
+                    + eps * k * ((c2_o[i] - cs) ** 3) * alpha_o[i]
+                ]
+            else:
+                # [alpha] equation, no reaction terms
+                #
+                #
+                row += [j + 1]
+                col += [j + 1]  # alpha_j
+                val += [-1 / dt]
+                b += [(alpha[i] - alpha_o[i]) / dt]
+        
 
 
         # at the last node we impose no H flux out of the domain
-        j = n2 - 1
-        k = n3 + ej * j
-        row += 3 * [k]
-        col += [k - 2 * ej, k - ej, k]
+        i = n2 - 1
+        j = n3 + ej * i
+        row += 3 * [j]
+        col += [j - 2 * ej, j - ej, j]
         val += [-1, 4, -3]
         # second order differencing
-        b += [(3 * c2[j] - 4 * c2[j - 1] + c2[j - 2])]
+        b += [(3 * c2[i] - 4 * c2[i - 1] + c2[i - 2])]
+
+
+        
+        # solve the matrix problem for this iteration
+        a = sp.sparse.coo_matrix((val, (row, col)), shape=(n3 + n2 * ej, n3 + n2 * ej))
+
+        print(len(val),len(col),len(row),len(b))
+        # system = petsc.PETScSparseLinearSystem(a, b)
+        # x = system.linear_solve()
+
+        # print('det',np.linalg.det(a.toarray()))
+        
+        x = sp.sparse.linalg.spsolve(a.tocsr(),b)
+    
+        # residual is the maximum correction value
+        res = sp.linalg.norm(x, ord=np.inf)
+        print(res)
+        
+        # print(
+        #    f"iteration = {iteration} residual = {residual} ||b||_inf = {sp.linalg.norm(b, ord=np.inf)}"
+        # )
+        # add the corrections to the current guess
+        c3[0:n3] += x[0:n3]
+        c2[0:n2] += x[n3 : n3 + n2 * ej : ej]
+        alpha[0:n2] += x[n3 + 1 : n3 + n2 * ej : ej]
+        D = D1 * (1-alpha) + D2 * alpha
+
+        if iterations > 10:
+            print("Too many iterations")
+            sys.exit()

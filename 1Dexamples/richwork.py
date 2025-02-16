@@ -348,12 +348,13 @@ while t < tmax:
             b += [D[j] - alpha[j] * D2 - (1 - alpha[j]) * D1]
 
         # solve the matrix problem for this iteration
+        print(len(val),len(row),len(col),len(b),n3+n2*nv)
         a = sp.sparse.coo_matrix((val, (row, col)), shape=(n3 + n2 * nv, n3 + n2 * nv))
         # system = petsc.PETScSparseLinearSystem(a, b)
         # x = system.linear_solve()
 
         # print('det',np.linalg.det(a.toarray()))
-
+        print(len(val),len(col),len(row),len(b))
         x = sp.sparse.linalg.spsolve(a.tocsr(),b)
         # residual is the maximum correction value
         residual = sp.linalg.norm(x, ord=np.inf)
