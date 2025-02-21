@@ -14,7 +14,7 @@ def x_from_X(X):
     'X'. Returns: not only x(X) but also x'(X) and x''(X).
 
     """
-    BX = 0.01  # smaller BX leads to more NON-uniformity
+    BX = 0.001  # smaller BX leads to more NON-uniformity
     # +0*X below prevents numpy from returning a scalar when acting
     # on an iterable container for X
     return (X + BX) * (X + BX) - BX * BX, 2 * (X + BX)
@@ -24,22 +24,24 @@ def x_from_X(X):
 #
 # discretisation
 n3 = 51  # oxide
-n2 = 101  # metal
+n2 = 2001  # metal
 # number of variables in the bulk
 nv = 3  # [H] and [U] in the bulk plus diffusivity of mixture
 
 # dimensional quantities : here approximated for room temp + some ad-hoc choices
-L2star = 1000 * 1.0e-7  # bulk domain lengthscale 1000nm=1um
+L2star = 10 * 1e3 * 1.0e-7  # bulk domain lengthscale 1000nm=1um
 L3star = 10 * 1.0e-7  # oxide domain lengthscale 10nm
 D1star = 1.0e-13  # cm^2/s, diffusion of H in UH3  -- *ad hoc* value
-D2star = 1.49e-10  # cm^2/s, diffusion of H in U (room temp value)
-D3star = 1.18e-12  # cm^2/s, diffusion of H in UO2 (room temp value)
+D2star = 5.0e-10  # cm^2/s, diffusion of H in U (room temp value)
+D3star = 1.0e-12  # cm^2/s, diffusion of H in UO2 (room temp value)
 N2star = 8.01e-2  # mol/cm^3, number density of U
 Csstar = 1.0e-5  # mol/cm^3, saturation [H] in U -- *ad-hoc* value
 Castar = 1.0e-4  # mol/cm^3, surface value for [H] -- *ad-hoc* value
 
 # fixed reference values to keep time/lengthscales consistent in comparisons
-Lrefstar = 1.0e3 * 1.0e-7  # using 1um=1000nm here
+# Lrefstar = 1.0e2 * 1.0e-7  # using 1um=1000nm here
+Lrefstar = L2star
+
 Drefstar = D2star  # using the U value
 
 # non-dimensional domains
@@ -55,7 +57,7 @@ X2_nodes = np.linspace(0, Xmax, n2)  # bulk nodes in comp. coordinate
 # physical node locations
 x2_nodes, x2d_nodes = x_from_X(X2_nodes)
 # non-dimensional max = 10^4 sec
-tmax = 3.0e4 * Drefstar / (Lrefstar * Lrefstar)
+tmax = 3.0e6 * Drefstar / (Lrefstar * Lrefstar)
 
 # non-dimensional variables
 c3 = np.zeros(n3, dtype=np.float64)  # oxide
@@ -67,7 +69,7 @@ D1 = D1star / Drefstar
 cs = Csstar / Castar  # saturation value \in [0,1)
 eps = Castar / N2star  # relative forcing measure
 reactK = (
-    1.0e6  # ad-hoc value, SSI 2024 paper suggests 1.e^4-1.e^5 but based on 1nm scale!
+    1e6  # ad-hoc value, SSI 2024 paper suggests 1.e^4-1.e^5 but based on 1nm scale!
 )
 D = D2 * np.ones(n2, dtype=np.float64)  # mixture diffusion in the bulk, initially =D2
 
@@ -88,10 +90,12 @@ print(f"Non-dimensional max time ={tmax}")
 # step sizes
 h3 = L3 / (n3 - 1)
 h3s = h3 * h3
-h2 = L2 / (n2 - 1)
+h2 = L2/ (Xmax*(n2 - 1))
 h2s = h2 * h2
-dt = 0.02
+dt = 0.0002
 tol = 1.0e-8
+
+print(x2_nodes[200])
 
 # time step the system
 t = 0
@@ -392,7 +396,7 @@ while t < tmax:
     # save every 100 steps
     if step % 100 == 0:
         print(
-            f"Plot at t={t} tstar={t*(Lrefstar**2)/(Drefstar)} (sec) c_int={c2[0]} c_end={c2[n2-1]} itn={iteration}"
+            f"Plot at t={t} tstar={t*(Lrefstar**2)/(Drefstar)} (sec) c_int={c2[0],alpha[0]} c_end={c2[n2-1]} itn={iteration}"
         )
         np.savetxt(
             f"formal_work/data1D/k1e6/c3{t:.2f}.dat",

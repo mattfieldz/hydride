@@ -1,18 +1,18 @@
 import numpy as np
 
 
-def ISA_calculations(invest_month,years):
+def ISA_calculations(initial_ISA,initial_LISA,invest_month,years):
     # returns total_value
     # outputs total value, net_contributions, surplus
     interest_rate = 0.07
     government_contribution = 0.25
 
-    invest_LISA = invest_month / 2
+    invest_LISA = invest_month / 2 
     invest_ISA = invest_month / 2
 
 
-    principle_ISA = 3000
-    principle_LISA = 0
+    principle_ISA = initial_ISA
+    principle_LISA = initial_LISA
     total_value = principle_ISA + principle_LISA
 
     net_contributions = 0
@@ -26,9 +26,9 @@ def ISA_calculations(invest_month,years):
         net_contributions += invest_month 
 
 
-    print(total_value)
-    print(net_contributions)
-    print('surplus : ',total_value-net_contributions)
+    # print(total_value)
+    # print(net_contributions)
+    # print('surplus : ',total_value-net_contributions)
     
     return total_value
 
@@ -43,15 +43,15 @@ def income_calculations():
     EXTERNAL_monthly = 500
 
     TOTAL_month = GTA_monthly + STIPEND_monthly + EXTERNAL_monthly
-    print('income per month : ',TOTAL_month)
-    print('income per year : ',12*TOTAL_month)
+    # print('income per month : ',TOTAL_month)
+    # print('income per year : ',12*TOTAL_month)
     return TOTAL_month
 
-def outcome_calculations(INCOME):
+def outcome_calculations(INCOME,invest):
     def hobbies():
         def ice_skating():
             PLANET_ICE_FEES_WEEK = 10 * 3
-            COACHING_FEES_WEEK = 25 
+            COACHING_FEES_WEEK = 25
             SKATES_YEAR = 200
 
             total_month = SKATES_YEAR / 12 + PLANET_ICE_FEES_WEEK * 4.333333 + COACHING_FEES_WEEK * 4.333333
@@ -76,16 +76,23 @@ def outcome_calculations(INCOME):
 
     def eating():
         week = 50
-        total_month = 50*4.3333333
+        week = 7 * 3.6 + (1.69 * 3 + 2.75 * 2 + 0.70 * 3 + 3 + 5)
+        total_month = week*4.3333333
+
         return total_month
 
-
-    total_outcome_month = hobbies() + utilities_rent() + eating() + 500
+    total_outcome_month = hobbies() + utilities_rent() + eating() + invest
         
-    print(total_outcome_month)
-
+    
+    return total_outcome_month
 
 INCOME = income_calculations()
-ISA_value = ISA_calculations(500,3)
+invest = 500
 
-outcome_calculations(INCOME)
+ISA_value = ISA_calculations(3000,0,invest,3) # 3 is length of PhD 
+OUTCOME = outcome_calculations(INCOME,invest)
+
+print('net income : ', INCOME)
+print('net outgoings : ',OUTCOME)
+print('net difference : ',INCOME - OUTCOME)
+print('Estimated ISA value at end of PhD : ',ISA_value)
