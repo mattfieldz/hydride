@@ -11,7 +11,7 @@ import time
 def x_from_X(X):
     """Defines the (non-uniformly distributed) physical coordinate 'x'
     in terms of the (uniformly distributed) computational coordinate
-    'X'. Returns: not only x(X) but also x'(X) and x''(X).
+    'X'. Returns: x(X) and x'(X).
 
     """
     BX = 0.01  # smaller BX leads to more NON-uniformity
@@ -25,7 +25,7 @@ def x_from_X(X):
 # discretisation
 
 n2 = 501 # metal
-m = 101 # width nodes
+m = 201 # width nodes
 
 # number of variables in the bulk
 nv = 3  # [H] and [U] in the bulk plus diffusivity of mixture
@@ -33,7 +33,7 @@ nv = 3  # [H] and [U] in the bulk plus diffusivity of mixture
 # dimensional quantities : here approximated for room temp + some ad-hoc choices
 L2star = 1000 * 1e3 * 1.0e-7  # bulk domain lengthscale 1000um
 L3star = 20 * 1.0e-7  # oxide domain lengthscale 20nm
-Lmstar = 750 * 1e3 * 1.0e-7 # 500um
+Lmstar = 1500 * 1e3 * 1.0e-7 # 500um
 D1star = 1.0e-13  # cm^2/s, diffusion of H in UH3  -- *ad hoc* value
 D2star = 5.0e-10  # cm^2/s, diffusion of H in U (room temp value)
 D3star = 1.0e-13  # cm^2/s, diffusion of H in UO2 (room temp value)
@@ -66,13 +66,13 @@ x2_nodes, x2d_nodes = x_from_X(X2_nodes)
 
 
 
-print(x2_nodes)
+# print(x2_nodes)
 
 # non-dimensional max = 10^4 sec
 tmax = 1e10
 
 np.savetxt(
-            f"formal_work/data2D/k0/no_oxide/glascott/x2_nodes.dat",
+            f"formal_work/data2D/k0/no_oxide/glascott/x2_nodes_l.dat",
             x2_nodes,
         )
 
@@ -119,6 +119,18 @@ t = 0
 step = 1  # periodic output counter
 
 computer_t0 = time.time()
+
+def surface_function(m,M):
+    radius = 30 * 1e3 * 1e-7
+    radial_max = radius / M 
+    radial_value = radial_max * (m-1)
+    return int(radial_value)
+radial_value = surface_function(m,Lmstar)
+print('radial_value = ',surface_function(m,Lmstar))
+
+
+
+
 
 while t < tmax:
     # evaluation at the new time step
@@ -178,7 +190,7 @@ while t < tmax:
                     if (j == 0) or (j == n2 - 1):
                         if j == 0:
                             # at the first bulk node we impose the flux condition
-                            if (m_i > 0) and (m_i < 4):
+                            if (m_i > 0) and (m_i < radial_value):
                                 row += 3 * [k]
                                 col += [
                                     k,
@@ -238,7 +250,7 @@ while t < tmax:
                                 k + nv + 2,  # D_{j+1}
                                 k + m_j, # right node
                                 k - m_j, # left node
-                                k + m_j + 2,
+                                k + m_j + 2, 
                                 k - m_j + 2
                             ]
                             val += [
@@ -274,13 +286,13 @@ while t < tmax:
                                 0.5
                                 * (D[j,m_i+1] + D[j,m_i])
                                 / (hls) 
-                                +0.5
-                                * (D[j,m_i])/m_r, # right node
+                                +
+                                (D[j,m_i])/m_r, # right node
                                 0.5
                                 * (D[j,m_i] + D[j,m_i-1])
                                 / (hls)
-                                + 0.5
-                                * (D[j,m_i])/m_r, # left node
+                                +
+                                (D[j,m_i])/m_r, # left node
                                 +0.5
                                 * (c2[j, m_i+1] - c2[j,m_i])
                                 / (hls),  # D_{j+1} right node
@@ -386,14 +398,14 @@ while t < tmax:
                                 0.5
                                 * (D[j,m_i+1] + D[j,m_i]) # right node
                                 / (hls)
-                                + 0.5
-                                * (D[j,m_i])/m_r,  # c_{j+1}
+                                +
+                                (D[j,m_i])/m_r,  # c_{j+1}
 
                                 0.5
                                 * (D[j,m_i] + D[j,m_i-1]) # left node
                                 / (hls)
-                                + 0.5
-                                * (D[j,m_i])/m_r,  # c_{j-1}
+                                + 
+                                (D[j,m_i])/m_r,  # c_{j-1}
 
                                 +0.5
                                 * (c2[j,m_i+1] - c2[j,m_i])
@@ -539,13 +551,13 @@ while t < tmax:
     # save every 100 steps
     if step % 10 == 0:
         print(
-            f"Plot at t={t} tstar={t*(Lrefstar**2)/(Drefstar)} (sec) c_int={c2[0]} c_end={c2[n2-1]} itn={iteration} computer_time ={time.time()-computer_t0}"
+            f"Plot at t={t} tstar={t*(Lrefstar**2)/(Drefstar)} (sec) c_int={c2[0]} c_end={c2[n2-2]} itn={iteration} computer_time ={time.time()-computer_t0}"
         )
         
         print('iterations : ',iteration)
 
         np.savetxt(
-            f"formal_work/data2D/k0/no_oxide/glascott/c2{t:.2f}.dat",
+            f"formal_work/data2D/k0/no_oxide/glascott/c2_201_double_across{t:.2f}.dat",
             c2,
         )
         np.savetxt(

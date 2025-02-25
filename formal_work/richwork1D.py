@@ -39,8 +39,8 @@ Csstar = 1.0e-5  # mol/cm^3, saturation [H] in U -- *ad-hoc* value
 Castar = 1.0e-4  # mol/cm^3, surface value for [H] -- *ad-hoc* value
 
 # fixed reference values to keep time/lengthscales consistent in comparisons
-# Lrefstar = 1.0e2 * 1.0e-7  # using 1um=1000nm here
-Lrefstar = L2star
+Lrefstar = 1.0 * 1.0e-7  # using 1um=1000nm here
+# Lrefstar = L2star
 
 Drefstar = D2star  # using the U value
 
@@ -69,7 +69,7 @@ D1 = D1star / Drefstar
 cs = Csstar / Castar  # saturation value \in [0,1)
 eps = Castar / N2star  # relative forcing measure
 reactK = (
-    1e6  # ad-hoc value, SSI 2024 paper suggests 1.e^4-1.e^5 but based on 1nm scale!
+    1e5  # ad-hoc value, SSI 2024 paper suggests 1.e^4-1.e^5 but based on 1nm scale!
 )
 D = D2 * np.ones(n2, dtype=np.float64)  # mixture diffusion in the bulk, initially =D2
 
@@ -92,7 +92,7 @@ h3 = L3 / (n3 - 1)
 h3s = h3 * h3
 h2 = L2/ (Xmax*(n2 - 1))
 h2s = h2 * h2
-dt = 0.0002
+dt = 1000
 tol = 1.0e-8
 
 print(x2_nodes[200])
