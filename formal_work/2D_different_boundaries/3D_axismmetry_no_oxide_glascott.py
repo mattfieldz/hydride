@@ -31,14 +31,14 @@ m = 201 # width nodes
 nv = 3  # [H] and [U] in the bulk plus diffusivity of mixture
 
 # dimensional quantities : here approximated for room temp + some ad-hoc choices
-L2star = 1000 * 1e3 * 1.0e-7  # bulk domain lengthscale 1000um
+L2star = 500 * 1e3 * 1.0e-7  # bulk domain lengthscale 1000um
 L3star = 20 * 1.0e-7  # oxide domain lengthscale 20nm
-Lmstar = 1500 * 1e3 * 1.0e-7 # 500um
+Lmstar = 500 * 1e3 * 1.0e-7 # 500um
 D1star = 1.0e-13  # cm^2/s, diffusion of H in UH3  -- *ad hoc* value
 D2star = 5.0e-10  # cm^2/s, diffusion of H in U (room temp value)
 D3star = 1.0e-13  # cm^2/s, diffusion of H in UO2 (room temp value)
 N2star = 8.01e-2  # mol/cm^3, number density of U
-Csstar = 1.0e-5  # mol/cm^3, saturation [H] in U -- *ad-hoc* value
+Csstar = 5.0e-5  # mol/cm^3, saturation [H] in U -- *ad-hoc* value
 Castar = 1.0e-4  # mol/cm^3, surface value for [H] -- *ad-hoc* value
 
 # fixed reference values to keep time/lengthscales consistent in comparisons
@@ -55,14 +55,21 @@ Lm = Lmstar / Lrefstar # width
 
 # Choose computation coord Xmax such that x_from_X(Xmax)=L2
 Xmax = sp.optimize.root(lambda X: x_from_X(X)[0] - L2, 5).x[0]
+Mmax = sp.optimize.root(lambda X: x_from_X(X)[0] - Lm, 5).x[0]
+
+
 # exit if sanity check fails
 assert abs(x_from_X(Xmax)[0] - L2) < 1.0e-8
-
+assert abs(x_from_X(Mmax)[0] - Lm) < 1.0e-8
 
 # nodes in the oxide and bulk
 X2_nodes = np.linspace(0, Xmax, n2)  # bulk nodes in comp. coordinate
 # physical node locations
 x2_nodes, x2d_nodes = x_from_X(X2_nodes)
+
+M2_nodes = np.linspace(0,Mmax,m)
+
+m2_nodes, m2d_nodes = x_from_X(M2_nodes)
 
 
 
@@ -72,7 +79,7 @@ x2_nodes, x2d_nodes = x_from_X(X2_nodes)
 tmax = 1e10
 
 np.savetxt(
-            f"formal_work/data2D/k0/no_oxide/glascott/x2_nodes_l.dat",
+            f"formal_work/data2D/k0/no_oxide/glascott/x2_nodes_nonlinear.dat",
             x2_nodes,
         )
 
@@ -104,9 +111,9 @@ print(f"Non-dimensional max time ={tmax}")
 # metric_file = open("1Dexamples/data/metric.dat", "w")
 
 # step sizes
-h2 = L2 / (Xmax*(n2 - 1))
+h2 = L2 / (Xmax * (n2 - 1))
 h2s = h2 * h2
-hl = Lm / (m-1)
+hl = Lm / (Mmax * (m-1))
 hls = hl * hl
 
 print(h2,hl)
@@ -179,10 +186,10 @@ while t < tmax:
                 elif m_i == m-1:
                     
                 
-                    row += [k]
-                    col += [k]
-                    val += [1]
-                    b += [0]
+                    row += 3 * [k]
+                    col += [(k-2*m_j), (k-m_j), (k)]
+                    val += [-1, 4, -3]
+                    b += [c2[j,m_i-2] + 3*c2[j,m_i] - 4*c2[j,m_i-1]]
                     
                 else:    
                 
@@ -190,7 +197,7 @@ while t < tmax:
                     if (j == 0) or (j == n2 - 1):
                         if j == 0:
                             # at the first bulk node we impose the flux condition
-                            if (m_i > 0) and (m_i < radial_value):
+                            if (m_i > 0) and (m_i <= radial_value):
                                 row += 3 * [k]
                                 col += [
                                     k,
@@ -224,12 +231,11 @@ while t < tmax:
                             
                         if j == n2 - 1:
                             # at the last node we impose no H flux out of the domain
+                            row += 3 * [k]
+                            col += [(k-2*nv), (k-nv), (k)]
+                            val += [-1, 4, -3]
+                            b += [c2[j-2,m_i] + 3*c2[j,m_i] - 4*c2[j-1,m_i]]
                             
-                            row += [k]
-                            col += [k]
-                            val += [1]
-                            # second order differencing
-                            b += [0]
                             
                     else:  # we impose the diffusion equation at internal nodes
                         # these values appear in the diffusion w.r.t. comp. coord.
@@ -256,10 +262,10 @@ while t < tmax:
                             val += [
                                 0.5
                                 * (D[j,m_i] + D[j - 1,m_i])
-                                / (h2s * x2d_nodes[j] * x2dmh),  # c_{j-1}
+                                / (h2s * x2d_nodes[j] * x2dmh),  # c_{j-1,m_i}
                                 -0.5
                                 * (c2[j,m_i] - c2[j - 1,m_i])
-                                / (h2s * x2d_nodes[j] * x2dmh),  # D_{j-1}
+                                / (h2s * x2d_nodes[j] * x2dmh),  # D_{j-1,m_i}
                                 -0.5
                                 * ((D[j + 1,m_i] + D[j,m_i]) / x2dph + (D[j,m_i] + D[j - 1,m_i]) / x2dmh)
                                 / (h2s * x2d_nodes[j])
@@ -267,16 +273,21 @@ while t < tmax:
                                 * ((D[j,m_i+1] + D[j,m_i]) + (D[j,m_i] + D[j,m_i-1]))
                                 / (hls) # left ride contributions
                                 - 2 / dt
-                                - 3 * reactK * (3 * (c2[j,m_i] - cs) ** 2 * alpha[j,m_i]),  # c_j
+                                - 3 * reactK * (3 * (c2[j,m_i] - cs) ** 2 * alpha[j,m_i]),  # c_{j,m_i}
                                 -3 * reactK * (c2[j,m_i] - cs) ** 3,  # alpha_j
                                 +0.5 * (c2[j + 1,m_i] - c2[j,m_i]) / (h2s * x2d_nodes[j] * x2dph)
                                 - 0.5
                                 * (c2[j,m_i] - c2[j - 1,m_i])
                                 / (h2s * x2d_nodes[j] * x2dmh) 
+
                                 +0.5 * (c2[j,m_i+1] - c2[j,m_i]) / (hls) # left side contributions
+                                
                                 - 0.5
                                 * (c2[j,m_i] - c2[j,m_i-1])
-                                / (hls),  # D_j
+                                / (hls)
+
+                                + (c2[j,m_i+1] - c2[j,m_i-1])/m_r
+                                ,# D_j
                                 0.5
                                 * (D[j + 1,m_i] + D[j,m_i])
                                 / (h2s * x2d_nodes[j] * x2dph),  # c_{j+1}
@@ -385,9 +396,13 @@ while t < tmax:
                                 * (c2[j,m_i] - c2[j - 1,m_i])
                                 / (h2s * x2d_nodes[j] * x2dmh)
                                 +0.5 * (c2[j,m_i+1] - c2[j,m_i]) / (hls)
+
                                 - 0.5
                                 * (c2[j,m_i] - c2[j,m_i-1])
-                                / (hls),  # D_j
+                                / (hls)
+
+                                + (c2[j,m_i+1] - c2[j,m_i-1])/m_r
+                                ,  # D_j
                                 0.5
                                 * (D[j + 1,m_i] + D[j,m_i])
                                 / (h2s * x2d_nodes[j] * x2dph),  # c_{j+1}
@@ -427,14 +442,17 @@ while t < tmax:
                                 * (D[j,m_i] + D[j - 1,m_i])
                                 * (c2[j,m_i] - c2[j - 1,m_i])
                                 / (h2s * x2d_nodes[j] * x2dmh)
+
                                 - 0.5
                                 * (D[j,m_i+1] + D[j,m_i])
                                 * (c2[j,m_i+1] - c2[j,m_i])
                                 / (hls)
+
                                 + 0.5
                                 * (D[j,m_i] + D[j,m_i-1])
                                 * (c2[j,m_i] - c2[j,m_i-1])
                                 / (hls)
+
                                 + D[j,m_i] * (c2[j,m_i + 1] - c2[j,m_i-1]) / m_r
 
                                 # old time values for Crank-Nicolson
@@ -557,7 +575,7 @@ while t < tmax:
         print('iterations : ',iteration)
 
         np.savetxt(
-            f"formal_work/data2D/k0/no_oxide/glascott/c2_201_double_across{t:.2f}.dat",
+            f"formal_work/data2D/k0/no_oxide/glascott/c2_201_nonlinear_t_regular{t:.2f}.dat",
             c2,
         )
         np.savetxt(

@@ -75,14 +75,15 @@ numerics15t05 = []
 
 x2_nodes = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/x2_nodes.dat')
 
-x2_nodes_l = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/x2_nodes_update.dat')
+x2_nodes_l = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/x2_nodes_nonlinear.dat')
 
 for t in t_values:
     c2 = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/c2_201{t:.2f}.dat')
-    c21 = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/c2_201_update{t:.2f}.dat')
+    c21 = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/c2_201_nonlinear{t:.2f}.dat')
     c2_0 = c2[:,0]
     c2_01 = c21[:,0]
     
+
     spline = sp.interpolate.InterpolatedUnivariateSpline(x2_nodes,c2_0,k=4)
 
     spline1 = sp.interpolate.InterpolatedUnivariateSpline(x2_nodes_l,c2_01,k=4)
