@@ -2,12 +2,12 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 # t_values = np.loadtxt('1Dexamples/2Ddata/tspace.dat')
-t_values = [1000*i+0.00001 for i in range(1,int(15))]
+t_values = [1000*i+0.00001 for i in range(1,int(25))]
 t_values = np.array(t_values)
 
 n3 = 51
-n2 = 501
-m = 201
+n2 = 401
+m = 401
 
 L3star = 10*1.0e-7  # oxide lengthscale 10 nm = 1.e-8 m = 1.e-6 cm
 L2star = 1000*1.0e-7  # bulk lengthscale  1 um = 5.e-5 m = 5.e-3 cm
@@ -47,7 +47,7 @@ L2 = L2star / Lref
 fig,axis = plt.subplots(2,2)
 fig.subplots_adjust(wspace=0.5, hspace=0.5)
 
-x2_nodes = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/x2_nodes.dat')
+x2_nodes = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/x2_nodes_only.dat')
 x3_nodes = np.loadtxt(f'formal_work/data2D/k0/1nm/x3_nodes.dat')
 m_axis = np.linspace(0,Lm,m)
 
@@ -63,7 +63,7 @@ c2_deep = []
 t_c = 0
 for t in t_values:
     t_c += 1
-    c2 = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/c2_201_update{t:.2f}.dat')
+    c2 = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/c2_401_only_diff{t:.2f}.dat')
     alpha = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/alpha{t:.2f}.dat')
     # c2_1D = np.loadtxt(f'formal_work/data1D/k1e6/c2{t:.2f}.dat')
     # alpha_1D = np.loadtxt(f'formal_work/data1D/k1e6/alpha{t:.2f}.dat')

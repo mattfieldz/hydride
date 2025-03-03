@@ -1,14 +1,14 @@
 import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
-t_values = [1000*i+0.00001 for i in range(1,int(14))]
+t_values = [1000*i+0.00001 for i in range(1,int(21))]
 t_values = np.array(t_values)
 
 t_05 = np.array([500*i+0.0001 for i in range(1,int(30))])
 
-L2star = 1000 * 1.0e-7  # bulk domain lengthscale 1000nm=1um
+L2star = 500 * 1.0e-7  # bulk domain lengthscale 1000nm=1um
 L3star = 20 * 1.0e-7  # oxide domain lengthscale 10nm
-Lmstar = 1500 * 1.0e-7 # 100um
+Lmstar = 500 * 1.0e-7 # 100um
 D1star = 1.0e-15  # cm^2/s, diffusion of H in UH3  -- *ad hoc* value
 D2star = 5.0e-10  # cm^2/s, diffusion of H in U (room temp value)
 D3star = 1.0e-13  # cm^2/s, diffusion of H in UO2 (room temp value)
@@ -34,7 +34,7 @@ reactK = (
     0  # ad-hoc value, SSI 2024 paper suggests 1.e^4-1.e^5 but based on 1nm scale!
 )
 
-r = 30 * 1e3 * 1e-7 / Lrefstar # radius
+r = 15 * 1e3 * 1e-7 / Lrefstar # radius
 
 def ierfc(x):
     return 1/np.sqrt(np.pi) * np.exp(-x**2) - x * (1 - sp.special.erf(x))
@@ -73,13 +73,13 @@ numerics5t05 = []
 numerics10t05 = []
 numerics15t05 = []
 
-x2_nodes = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/x2_nodes.dat')
+x2_nodes = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/x2_nodes_only_7.dat')
 
-x2_nodes_l = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/x2_nodes_nonlinear.dat')
-
+x2_nodes_l = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/x2_nodes.dat')
+print(x2_nodes)
 for t in t_values:
-    c2 = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/c2_201{t:.2f}.dat')
-    c21 = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/c2_201_nonlinear{t:.2f}.dat')
+    c2 = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/c2_401_only_diff_7{t:.2f}.dat')
+    c21 = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/c2_401{t:.2f}.dat')
     c2_0 = c2[:,0]
     c2_01 = c21[:,0]
     
