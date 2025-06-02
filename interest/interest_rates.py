@@ -7,8 +7,8 @@ def ISA_calculations(initial_ISA,initial_LISA,invest_month,years):
     interest_rate = 0.1
     government_contribution = 0.25
 
-    invest_LISA = invest_month / 2 
-    invest_ISA = invest_month / 2
+    invest_LISA = invest_month * 0.5 
+    invest_ISA = invest_month * 0.5
 
 
     principle_ISA = initial_ISA
@@ -42,10 +42,13 @@ def income_calculations():
 
     EXTERNAL_monthly = 500
 
-    ADDITIONAL_AI_weekly = 100
+    ADDITIONAL_AI_weekly = 0
     ADDITIONAL_AI_monthly = ADDITIONAL_AI_weekly * 4.3333333
 
     TOTAL_month = GTA_monthly + STIPEND_monthly + EXTERNAL_monthly + ADDITIONAL_AI_monthly
+
+    TOTAL_month = 35000 / 12
+
     # print('income per month : ',TOTAL_month)
     # print('income per year : ',12*TOTAL_month)
     return TOTAL_month
@@ -71,7 +74,7 @@ def outcome_calculations(INCOME,invest):
         return total_hobbies
     
     def utilities_rent():
-        rent_month = 960
+        rent_month = 700
         virgin = 33.74
         gas_electric = 65.70
         water = 30 # tentative
@@ -100,9 +103,9 @@ def outcome_calculations(INCOME,invest):
     return total_outcome_month
 
 INCOME = income_calculations()
-invest = 1100
+invest = 1500
 
-ISA_value = ISA_calculations(3000,0,invest,40) # 3 is length of PhD 
+ISA_value = ISA_calculations(3000,0,invest,50) # 3 is length of PhD 
 OUTCOME = outcome_calculations(INCOME,invest)
 
 print('net income : ', INCOME)

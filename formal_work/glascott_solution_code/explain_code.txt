@@ -1,0 +1,5 @@
+The code in this folder is as follows
+
+3D_axisymmetry_MAIN.py solves the diffusion equation with k=0 and iterating so is the version of our code
+3D_onlydiffusion.py solves the diffusion equation with no iteration just directly
+glascott_solution.py has the analytic solution and plots the comparison of the three

@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
-L3star = 10*1.0e-7  # oxide lengthscale 10 nm = 1.e-8 m = 1.e-6 cm
+L3star = 20*1.0e-7  # oxide lengthscale 10 nm = 1.e-8 m = 1.e-6 cm
 L2star = 1000*1.0e-7  # bulk lengthscale  50 um = 5.e-5 m = 5.e-3 cm
 Lmstar = 5000*1.0e-7
 
@@ -24,7 +24,7 @@ N1star = 4.54e-2
 N2star = 8.01e-2
 N3star = 4.06e-2
 
-k2star = 2.0e13
+k2star = 1.0e13
 
 Castar = 1.0e-4
 Csstar = 1.0e-5

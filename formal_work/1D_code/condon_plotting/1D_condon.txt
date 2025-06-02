@@ -1,0 +1,6 @@
+The 1D_condon produces code solving the condon equation shifting x_c across and then plots the value of the interface against time
+
+Can vary $m$, $c_s$, diffusivities and kstar
+
+Has comparison to asymptotics which is typically good but small time growth is fast and hence there is a vertical offset by some constant.
+Zooming out enough makes this offset seem small but is disingenuous 

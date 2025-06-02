@@ -38,12 +38,12 @@ D1star = 1.0e-13  # cm^2/s, diffusion of H in UH3  -- *ad hoc* value
 D2star = 5.0e-10  # cm^2/s, diffusion of H in U (room temp value)
 D3star = 1.0e-13  # cm^2/s, diffusion of H in UO2 (room temp value)
 N2star = 8.01e-2  # mol/cm^3, number density of U
-Csstar = 1.0e-5  # mol/cm^3, saturation [H] in U -- *ad-hoc* value
+Csstar = 1.0e-6  # mol/cm^3, saturation [H] in U -- *ad-hoc* value
 Castar = 1.0e-4  # mol/cm^3, surface value for [H] -- *ad-hoc* value
 
 # fixed reference values to keep time/lengthscales consistent in comparisons
 
-Lrefstar = 1e2 * 1.0e-7  # 100nm
+Lrefstar =  100 * 1e-7  # 100nm
 # Lrefstar = L2star
 
 Drefstar = D2star  # using the U value
@@ -70,7 +70,7 @@ x2_nodes, x2d_nodes = x_from_X(X2_nodes)
 tmax = 1e10
 
 np.savetxt(
-            f"formal_work/data2D/k0/no_oxide/glascott/x2_nodes.dat",
+            f"formal_work/data2D/k1e5/x2_nodes_401.dat",
             x2_nodes,
         )
 
@@ -82,8 +82,9 @@ D2 = D2star / Drefstar
 D1 = D1star / Drefstar
 cs = Csstar / Castar  # saturation value \in [0,1)
 eps = Castar / N2star  # relative forcing measure
+kstar = 1e13
 reactK = (
-    0  # ad-hoc value, SSI 2024 paper suggests 1.e^4-1.e^5 but based on 1nm scale!
+    Lrefstar**2*eps**2*N2star**3/Drefstar * kstar  # ad-hoc value, SSI 2024 paper suggests 1.e^4-1.e^5 but based on 1nm scale!
 )
 D = D2 * np.ones((n2,m), dtype=np.float64)  # mixture diffusion in the bulk, initially =D2
 
@@ -99,6 +100,7 @@ print(f"Diffusion timescale for Lref* of hydride T1*={Lrefstar**2/D1star} sec")
 print(f"Ratio of H to U concentration eps={eps}")
 print(f"Relative solubility limit ={cs}")
 print(f"Non-dimensional max time ={tmax}")
+print(f"Non-dimensional reaction constant k ={reactK}")
 # metric_file = open("1Dexamples/data/metric.dat", "w")
 
 # step sizes
@@ -107,7 +109,7 @@ h2s = h2 * h2
 hl = Lm / (m-1)
 hls = hl * hl
 
-dt = 100
+dt = 50
 tol = 1.0e-8
 
 # time step the system
@@ -196,9 +198,9 @@ while t < tmax:
                                 deriv_cg = (-3 * c2[0,m_i] + 4 * c2[1,m_i] - c2[2,m_i]) / (2 * h2 * x2d_nodes[j] ) 
 
                                 val += [-3 * D[j,m_i] / (2 * h2 * x2d_nodes[0]),   
-                                        4 * D[j,m_i] / (2 * h2 * x2d_nodes[0]),
+                                        4 * D[j,m_i] / (2 * h2 * x2d_nodes[0]) - D3/L3,
                                         -D[j,m_i] / (2 * h2 * x2d_nodes[0])]
-                                b += [D3 * (-1) / L3 - D[j,m_i] * deriv_cg]
+                                b += [D3 * (c2[j,m_i]-1) / L3 - D[j,m_i] * deriv_cg]
 
 
                             else:
@@ -558,17 +560,17 @@ while t < tmax:
     # save every 100 steps
     if step % 10 == 0:
         print(
-            f"Plot at t={t} tstar={t*(Lrefstar**2)/(Drefstar)} (sec) c_int={c2[0,0]} c_end={c2[n2-2,0]} itn={iteration} computer_time ={time.time()-computer_t0}"
+            f"Plot at t={t} tstar={t*(Lrefstar**2)/(Drefstar)} (sec) c_int={c2[0,0]} a_int={alpha[0,0]} c_end={c2[n2-2,0]} itn={iteration} computer_time ={time.time()-computer_t0}"
         )
         
         print('iterations : ',iteration)
 
         np.savetxt(
-            f"formal_work/data2D/k0/no_oxide/glascott/c2_401{t:.2f}.dat",
+            f"formal_work/data2D/k1e5/c2_401_{t:.2f}.dat",
             c2,
         )
         np.savetxt(
-            f"formal_work/data2D/k0/no_oxide/glascott/alpha{t:.2f}.dat",
+            f"formal_work/data2D/k1e5/alpha_401_{t:.2f}.dat",
             alpha,
         )
         # np.savetxt(

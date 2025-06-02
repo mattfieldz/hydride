@@ -1,14 +1,14 @@
 import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
-t_values = [1000*i+0.00001 for i in range(1,int(21))]
+t_values = [0.01*i+0.00001 for i in range(1,int(20))]
 t_values = np.array(t_values)
 
 t_05 = np.array([500*i+0.0001 for i in range(1,int(30))])
 
-L2star = 500 * 1.0e-7  # bulk domain lengthscale 1000nm=1um
+L2star = 150 * 1e3 * 1.0e-7  # bulk domain lengthscale 1000nm=1um
 L3star = 20 * 1.0e-7  # oxide domain lengthscale 10nm
-Lmstar = 500 * 1.0e-7 # 100um
+Lmstar = 150 * 1e3 * 1.0e-7 # 100um
 D1star = 1.0e-15  # cm^2/s, diffusion of H in UH3  -- *ad hoc* value
 D2star = 5.0e-10  # cm^2/s, diffusion of H in U (room temp value)
 D3star = 1.0e-13  # cm^2/s, diffusion of H in UO2 (room temp value)
@@ -17,7 +17,8 @@ Csstar = 1.0e-5  # mol/cm^3, saturation [H] in U -- *ad-hoc* value
 Castar = 1.0e-4  # mol/cm^3, surface value for [H] -- *ad-hoc* value
 
 # fixed reference values to keep time/lengthscales consistent in comparisons
-Lrefstar = 1.0e2 * 1.0e-7  # using 1um=1000nm here
+Lrefstar = 100 * 1e-7  # using 1um=1000nm here
+Lrefstar = L2star
 Drefstar = D2star  # using the U value
 
 # non-dimensional domains
@@ -68,26 +69,35 @@ numerics51 = []
 numerics101 = []
 numerics151 = []
 
+numerics0_1D = []
+numerics5_1D = []
+numerics10_1D = []
+numerics15_1D = []
+
 numerics0t05 = []
 numerics5t05 = []
 numerics10t05 = []
 numerics15t05 = []
 
-x2_nodes = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/x2_nodes_only_7.dat')
+x2_nodes = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/x2_nodes.dat')
 
 x2_nodes_l = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/x2_nodes.dat')
-print(x2_nodes)
+# print(x2_nodes)
 for t in t_values:
-    c2 = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/c2_401_only_diff_7{t:.2f}.dat')
-    c21 = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/c2_401{t:.2f}.dat')
+    # c2 = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/c2_401{t:.2f}.dat')
+    c2 = np.loadtxt(f'formal_work/data2D/k1e5/c2_401_{t:.2f}.dat')
+    c2_1D_total = np.loadtxt(f'formal_work/data1D/k1e5/c2{t:.2f}.dat')
+    x2_nodes_1D = c2_1D_total[:,0]
+    c2_1D = c2_1D_total[:,1]
     c2_0 = c2[:,0]
-    c2_01 = c21[:,0]
+    # c2_01 = c21[:,0]
     
 
     spline = sp.interpolate.InterpolatedUnivariateSpline(x2_nodes,c2_0,k=4)
 
-    spline1 = sp.interpolate.InterpolatedUnivariateSpline(x2_nodes_l,c2_01,k=4)
+    # spline1 = sp.interpolate.InterpolatedUnivariateSpline(x2_nodes_l,c2_01,k=4)
 
+    spline_1D = sp.interpolate.InterpolatedUnivariateSpline(x2_nodes_1D,c2_1D,k=4)
 
     glascott0.append(c(t,0))
     glascott5.append(c(t,5*1e3*1e-7/Lrefstar))
@@ -99,10 +109,15 @@ for t in t_values:
     numerics10.append(spline(10*1e3*1e-7/Lrefstar))
     numerics15.append(spline(15*1e3*1e-7/Lrefstar))
 
-    numerics01.append(spline1(0))
-    numerics51.append(spline1(5*1e3*1e-7/Lrefstar))
-    numerics101.append(spline1(10*1e3*1e-7/Lrefstar))
-    numerics151.append(spline1(15*1e3*1e-7/Lrefstar))
+    # numerics01.append(spline1(0))
+    # numerics51.append(spline1(5*1e3*1e-7/Lrefstar))
+    # numerics101.append(spline1(10*1e3*1e-7/Lrefstar))
+    # numerics151.append(spline1(15*1e3*1e-7/Lrefstar))
+
+    numerics0_1D.append(spline_1D(0))
+    numerics5_1D.append(spline_1D(5*1e3*1e-7/Lrefstar))
+    numerics10_1D.append(spline_1D(10*1e3*1e-7/Lrefstar))
+    numerics15_1D.append(spline_1D(15*1e3*1e-7/Lrefstar))
 
 
 # for t in t_05:
@@ -129,19 +144,23 @@ plt.plot(t_dim,numerics5,color='blue',linestyle='dashed')
 plt.plot(t_dim,numerics10,color='orange',linestyle='dashed')
 plt.plot(t_dim,numerics15,color='green',linestyle='dashed')
 
-plt.plot(t_dim,numerics01,color='red',linestyle='dashdot')
-plt.plot(t_dim,numerics51,color='blue',linestyle='dashdot')
-plt.plot(t_dim,numerics101,color='orange',linestyle='dashdot')
-plt.plot(t_dim,numerics151,color='green',linestyle='dashdot')
+# plt.plot(t_dim,numerics01,color='red',linestyle='dashdot')
+# plt.plot(t_dim,numerics51,color='blue',linestyle='dashdot')
+# plt.plot(t_dim,numerics101,color='orange',linestyle='dashdot')
+# plt.plot(t_dim,numerics151,color='green',linestyle='dashdot')
 
+# plt.plot(t_dim,numerics0_1D,color='red',linestyle='dotted')
+# plt.plot(t_dim,numerics5_1D,color='blue',linestyle='dotted')
+# plt.plot(t_dim,numerics10_1D,color='orange',linestyle='dotted')
+# plt.plot(t_dim,numerics15_1D,color='green',linestyle='dotted')
 
 # plt.plot(t_dim05,numerics0t05,color='red',linestyle='dotted')
 # plt.plot(t_dim05,numerics5t05,color='blue',linestyle='dotted')
 # plt.plot(t_dim05,numerics10t05,color='orange',linestyle='dotted')
 # plt.plot(t_dim05,numerics15t05,color='green',linestyle='dotted')
 
-
-
+plt.ylabel('$c$ / $C^*$')
+plt.xlabel('t / s')
 
 plt.legend()
 plt.show()
