@@ -1,11 +1,15 @@
 
 """e.g. python diffusionBC_reaction.py -ksp_type preonly -pc_type lu -pc_factor_mat_solver_type superlu_dist"""
 
+
 import numpy as np
 import scipy as sp
 # import deps.sp2petsc as petsc
 import sys
 from matplotlib import pyplot as plt
+
+plt.style.use('formal_work/minorticks.mplstyle')
+
 
 # some functions to remap coords
 def x_from_X(X):
@@ -88,7 +92,7 @@ h2 = 0.001
 h2s = h2 * h2
 dt = 0.0001
 tol = 1.0e-8
-alpha_c = 0.98
+alpha_c = 0.99
 
 
 
@@ -124,122 +128,124 @@ print(length_scale,domain)
 # rough_estimate = [1.7, 1.7, 1.7, 1.7, 1.6, 1.6, 1.6, 1.6, 1.6, 1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 1.4, 1.4, 1.4, 1.4, 1.4]
 # rough_estimate = [1.7, 1.69, 1.67, 1.65, 1.63, 1.62, 1.6, 1.58, 1.57, 1.54, 1.53, 1.51, 1.5, 1.48, 1.46, 1.44, 1.43, 1.41, 1.39, 1.38]
 # rough_estimate = [1.703, 1.686, 1.669, 1.652, 1.634, 1.617, 1.6, 1.583, 1.566, 1.548, 1.531, 1.514, 1.497, 1.48, 1.462, 1.445, 1.428, 1.411, 1.394, 1.376]
-rough_estimate = [1.7032, 1.686, 1.6688, 1.6516, 1.6344, 1.6172, 1.6, 1.5828, 1.5656, 1.5484, 1.5312, 1.514, 1.4968, 1.4796, 1.4624, 1.4452, 1.428, 1.4108, 1.3936, 1.3764]
+# rough_estimate = [1.7032, 1.686, 1.6688, 1.6516, 1.6344, 1.6172, 1.6, 1.5828, 1.5656, 1.5484, 1.5312, 1.514, 1.4968, 1.4796, 1.4624, 1.4452, 1.428, 1.4108, 1.3936, 1.3764]
 
 # print('lol',np.array(rough_estimate)/(1-np.array(cs_values)))
 
 m_val_array = np.array(m_values)
 
 
-rough_estimate = np.sqrt(6/(m_val_array+1))
+rough_estimate = np.sqrt(6*(1-cs)**(m_val_array+1)/(m_val_array+1))
 print(rough_estimate)
-rough_estimate = [1.7204, 1.5712, 1.4564, 1.3656, 1.2914, 1.2292, 1.176, 1.1298, 1.0892, 1.0532]
+rough_estimate = [1.55885, 1.39335, 1.2631, 1.15688, 1.06797, 0.99204, 0.94615, 0.88823, 0.83678, 0.79066]
 
 print(rough_estimate)
+
+
 
 estimate_counter = 0
-for m in m_values:
+# for m in m_values:
     
-    c_xi_values = [rough_estimate[estimate_counter]-0.00008+0.00002*i for i in range(10)]
+#     c_xi_values = [rough_estimate[estimate_counter]-0.008+0.002*i for i in range(10)]
 
-    estimate_counter +=1
+#     estimate_counter +=1
 
-    min_value_list = []
-    min_value_dictionary = []
-    for i in (c_xi_values):
-        V = i/(3*(1-alpha_c))
-        residual = 1
-        iteration = 0
-        c2 = np.ones(n2, dtype=np.float64)  # metal
-        alpha = np.ones(n2, dtype=np.float64)  # volume fraction of metal       
-        while residual > tol:
-            iteration += 1
-            # construct the sparse matrix
-            row = []
-            col = []
-            val = []
-            b = []
+#     min_value_list = []
+#     min_value_dictionary = []
+#     for i in (c_xi_values):
+#         V = i/(3*(1-alpha_c))
+#         residual = 1
+#         iteration = 0
+#         c2 = np.ones(n2, dtype=np.float64)  # metal
+#         alpha = np.ones(n2, dtype=np.float64)  # volume fraction of metal       
+#         while residual > tol:
+#             iteration += 1
+#             # construct the sparse matrix
+#             row = []
+#             col = []
+#             val = []
+#             b = []
 
-            for j in range(n2):
-                k = j * nv
-                if j == 0:
+#             for j in range(n2):
+#                 k = j * nv
+#                 if j == 0:
                     
-                    row += [k,k+1]
-                    col += [k,k+1]
-                    val += [1,1]
-                    b += [1-c2[j],alpha_c-alpha[j]]
-                elif j == n2-1:
+#                     row += [k,k+1]
+#                     col += [k,k+1]
+#                     val += [1,1]
+#                     b += [1-cs-c2[j],alpha_c-alpha[j]]
+#                 elif j == n2-1:
                     
-                    row += [k,k+1]
-                    col += [k,k+1]
-                    val += [1,1]
-                    b += [-c2[j],1-alpha[j]]
+#                     row += [k,k+1]
+#                     col += [k,k+1]
+#                     val += [1,1]
+#                     b += [-c2[j],1-alpha[j]]
 
-                else:
+#                 else:
                     
-                    # c equation
-                    row += 4 * [k]
-                    col += [k-nv,
-                            k,
-                            k+nv,
-                            k+1]
-                    val += [1/h2s,
-                            -2/h2s - 3*m*c2[j]**(m-1) * alpha[j],
-                            1/h2s,
-                            -3*c2[j]**m
-                    ]
-                    b += [-(c2[j-1]-2*c2[j]+c2[j+1])/h2s + 3*c2[j]**m*alpha[j]]
+#                     # c equation
+#                     row += 4 * [k]
+#                     col += [k-nv,
+#                             k,
+#                             k+nv,
+#                             k+1]
+#                     val += [1/h2s,
+#                             -2/h2s - 3*m*c2[j]**(m-1) * alpha[j],
+#                             1/h2s,
+#                             -3*c2[j]**m
+#                     ]
+#                     b += [-(c2[j-1]-2*c2[j]+c2[j+1])/h2s + 3*c2[j]**m*alpha[j]]
                     
-                    # alpha equation
+#                     # alpha equation
 
-                    c_xi_0 = (-3*c2[0]+4*c2[1]-c2[2])/(2*h2)
-                    a_xi = (alpha[j+1]-alpha[j-1])/(2*h2)
+#                     c_xi_0 = (-3*c2[0]+4*c2[1]-c2[2])/(2*h2)
+#                     a_xi = (alpha[j+1]-alpha[j-1])/(2*h2)
                     
-                    row += 4 * [k+1]
-                    col += [k-nv+1,k,k+1,k+nv+1]
-                    val += [
-                        1/(2*h2) * V,
-                        m * c2[j]**(m-1) * alpha[j],
-                        c2[j]**m,
-                        -1/(2*h2) * V,
-                    ]
-                    b += [a_xi * V - c2[j]**m * alpha[j]]
+#                     row += 4 * [k+1]
+#                     col += [k-nv+1,k,k+1,k+nv+1]
+#                     val += [
+#                         1/(2*h2) * V,
+#                         m * c2[j]**(m-1) * alpha[j],
+#                         c2[j]**m,
+#                         -1/(2*h2) * V,
+#                     ]
+#                     b += [a_xi * V - c2[j]**m * alpha[j]]
             
-            a = sp.sparse.coo_matrix((val, (row, col)), shape=(n2 * nv,n2 * nv))
-            # system = petsc.PETScSparseLinearSystem(a, b)
-            # x = system.linear_solve()
+#             a = sp.sparse.coo_matrix((val, (row, col)), shape=(n2 * nv,n2 * nv))
+#             # system = petsc.PETScSparseLinearSystem(a, b)
+#             # x = system.linear_solve()
 
-            # print('det',np.linalg.det(a.toarray()))
+#             # print('det',np.linalg.det(a.toarray()))
             
-            x = sp.sparse.linalg.spsolve(a.tocsr(),b)
-            # residual is the maximum correction value
-            residual = sp.linalg.norm(x, ord=np.inf)
+#             x = sp.sparse.linalg.spsolve(a.tocsr(),b)
+#             # residual is the maximum correction value
+#             residual = sp.linalg.norm(x, ord=np.inf)
         
-            # print(
-            #    f"iteration = {iteration} residual = {residual} ||b||_inf = {sp.linalg.norm(b, ord=np.inf)}"
-            # )
-            # add the corrections to the current guess
+#             # print(
+#             #    f"iteration = {iteration} residual = {residual} ||b||_inf = {sp.linalg.norm(b, ord=np.inf)}"
+#             # )
+#             # add the corrections to the current guess
             
-            c2[0:n2] += x[0 : n2 * nv : nv]
-            alpha[0:n2] += x[1 : n2 * nv : nv]
+#             c2[0:n2] += x[0 : n2 * nv : nv]
+#             alpha[0:n2] += x[1 : n2 * nv : nv]
 
             
-            if iteration > 10:
-                print(residual)
+#             if iteration > 10:
+#                 print(residual)
                 
-                # print("Too many iterations")
-                # sys.exit()
-            # print(residual)
-        # c_xi_0_list.append(c_xi_0)
-        # print(cs)
-    # print(c_xi_0_list)
-        min_value_dictionary.append(i)
-        min_value_list.append(-c_xi_0/(3*(1-alpha_c))-V)
-        print(i,-c_xi_0/(3*(1-alpha_c))-V)
-    min_value_array = np.array(min_value_list)
+#                 # print("Too many iterations")
+#                 # sys.exit()
+#             # print(residual)
+#         # c_xi_0_list.append(c_xi_0)
+#         # print(cs)
+#     # print(c_xi_0_list)
+#         min_value_dictionary.append(i)
+#         min_value_list.append(-c_xi_0/(3*(1-alpha_c))-V)
+#         print(i,-c_xi_0/(3*(1-alpha_c))-V)
+#     min_value_array = np.array(min_value_list)
     
-    c_xi_computed_values.append(round(min_value_dictionary[np.argmin(np.abs(min_value_array))],5))
-    print(c_xi_computed_values)
+#     c_xi_computed_values.append(round(min_value_dictionary[np.argmin(np.abs(min_value_array))],5))
+#     print(c_xi_computed_values)
 
 # np.savetxt(
 #     f"formal_work/data1D/c_xi_0_list_cs_computed_varying.dat",
@@ -266,8 +272,29 @@ print('roots = ',roots)
 # axes[1].set_ylabel(r'$c$')
 # axes[1].set_xlabel(r'$x^* / \mathrm{nm}$')
 
-plt.plot(m_values,rough_estimate,label='Numerical solution')
-plt.plot(m_values,np.sqrt(6/(m_val_array+1)),label='Asymptotic solution')
+
+# alpha = 0.99 rough_estimate = [1.72605, 1.57714, 1.46185, 1.36931, 1.29499, 1.23274, 1.17775, 1.12803, 1.08417, 1.0451]
+
+# alpha = 0.98  rough_estimate = [1.7032, 1.686, 1.6688, 1.6516, 1.6344, 1.6172, 1.6, 1.5828, 1.5656, 1.5484, 1.5312, 1.514, 1.4968, 1.4796, 1.4624, 1.4452, 1.428, 1.4108, 1.3936, 1.3764]
+
+# alpha = 0.97 rought_estimate = [1.7144, 1.5652, 1.4524, 1.3616, 1.2874, 1.2252, 1.172, 1.1258, 1.0852, 1.0492]
+
+
+
+# old where c=1 at interface
+# a99_estimate = [1.72605, 1.57714, 1.46185, 1.36931, 1.29499, 1.23274, 1.17775, 1.12803, 1.08417, 1.0451]
+# a98_estimate = [1.7204, 1.5712, 1.4564, 1.3656, 1.2914, 1.2292, 1.176, 1.1298, 1.0892, 1.0532]
+# a97_estimate = [1.7144, 1.5652, 1.4524, 1.3616, 1.2874, 1.2252, 1.172, 1.1258, 1.0852, 1.0492]
+
+a99_estimate = [1.55285, 1.38935, 1.2611, 1.15888, 1.07397, 1.00204, 0.93815, 0.88423, 0.83678, 0.79266]
+a98_estimate = [1.54885, 1.38535, 1.2571, 1.15488, 1.06997, 0.99804, 0.93615, 0.88223, 0.83278, 0.79066]
+a97_estimate = [1.54285, 1.37935, 1.2531, 1.15088, 1.06597, 0.99404, 0.93215, 0.88023, 0.83078, 0.78866]
+
+plt.plot(m_values,a99_estimate,label=r'$\alpha_c=0.99$')
+plt.plot(m_values,a98_estimate,label=r'$\alpha_c=0.98$')
+plt.plot(m_values,a97_estimate,label=r'$\alpha_c=0.97$')
+
+plt.plot(m_values,np.sqrt(6*(1-cs)**(m_val_array+1)/(m_val_array+1)),label='Asymptotic solution',linestyle='dashed')
 plt.xlabel('Reaction order m')
 plt.ylabel(r'$C_\xi(0)$')
 

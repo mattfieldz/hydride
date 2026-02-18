@@ -1,0 +1,7 @@
+axes.grid: True
+grid.color: gray
+grid.linestyle: :
+xtick.minor.visible: True
+ytick.minor.visible: True
+xtick.minor.bottom: True
+ytick.minor.left: True

@@ -2,6 +2,9 @@ from matplotlib import pyplot as plt
 import numpy as np
 import scipy as sp
 
+plt.style.use('formal_work/minorticks.mplstyle')
+
+
 def x_from_X(X):
     """Defines the (non-uniformly distributed) physical coordinate 'x'
     in terms of the (uniformly distributed) computational coordinate
@@ -332,11 +335,13 @@ c2_second_deriv = np.zeros(300)
 # plt.plot(t_values_dim,1e7 * Lrefstar * hydride_interface_arr,label='Numerics,D=1')
 # plt.plot(t_values_dim,1e7 * Lrefstar * (np.array(integral_quantity[-1]) + eps/3 * (D3/L3 * (1-cs)*t_values - 2*cs*np.sqrt(D2*t_values/np.pi))))
 
+
+
 # plt.plot(t_values_dim, alpha_int)
 
 
 # plt.plot(t_values_dim,1e7 * Lrefstar * hydride_interface_arr_D,label='Numerics,D=1e2')
-plt.plot(t_values_dim[0:-1],alpha_int,label='numerics alpha D1e0')
+# plt.plot(t_values_dim[0:-1],alpha_int,label='numerics alpha D1e0')
 # plt.plot(t_values_dim[0:-1],alpha_int_D,label='numerics alpha D1e2')
 
 # plt.plot(t_values_dim,np.array(integral_quantity),label='numerics alpha D1e3')
@@ -361,12 +366,46 @@ plt.plot(t_values_dim[0:-1],alpha_int,label='numerics alpha D1e0')
 # plt.plot(t_values_dim,1e7 * Lrefstar * np.sqrt(2*eps*(1e-4)/(3*(1-threshold_alpha))*t_values))
 # plt.plot(Lrefstar * 1e7 * x2_nodes[0:100],alpha[0:100])
 
-plt.xlabel(r'$time^*/s$')
-plt.ylabel(r'Hydride thickness / $\mathrm{nm}$')
+
+# plt.plot(t_values_dim,1e7 * Lrefstar * np.array(integral_quantity))
+# plt.plot(t_values_dim, alpha_int)
+
+fig, ax = plt.subplots()
+fig.subplots_adjust(right=0.7)
+
+twin1 = ax.twinx()
 
 
-plt.legend()
+
+
+p1, = ax.plot(t_values_dim[0:-1], alpha_int, "C0", label=r"$\alpha$")
+p2, = twin1.plot(t_values_dim,1e7 * Lrefstar * np.array(integral_quantity), "C1", label=r'$\int{\alpha}$')
+
+ax.set(xlabel=r"time / s", ylabel=r"$\alpha$")
+twin1.set(ylabel=r"$\int_0^{\Gamma}{\alpha}\,\mathrm{d} x^*$ / $\mathrm{nm}$")
+
+twin1.grid(False)
+
+ax.yaxis.label.set_color(p1.get_color())
+twin1.yaxis.label.set_color(p2.get_color())
+
+
+ax.tick_params(axis='y', colors=p1.get_color())
+twin1.tick_params(axis='y', colors=p2.get_color())
+
+print(t_values_dim[-1])
+
+ax.legend(handles=[p1, p2],loc='center right')
 plt.show()
+
+
+
+# plt.xlabel(r'$time\, /\, s$')
+# plt.ylabel(r'Integral of $\alpha$ / $\mathrm{nm}$')
+
+
+# plt.legend()
+# plt.show()
 
 # fig, ax = plt.subplots()
 # fig.subplots_adjust(right=0.7)

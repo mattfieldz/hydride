@@ -38,7 +38,7 @@ D1star = 1.0e-13  # cm^2/s, diffusion of H in UH3  -- *ad hoc* value
 D2star = 5.0e-10  # cm^2/s, diffusion of H in U (room temp value)
 D3star = 1.0e-13  # cm^2/s, diffusion of H in UO2 (room temp value)
 N2star = 8.01e-2  # mol/cm^3, number density of U
-Csstar = 1.0e-6  # mol/cm^3, saturation [H] in U -- *ad-hoc* value
+Csstar = 1.0e-5  # mol/cm^3, saturation [H] in U -- *ad-hoc* value
 Castar = 1.0e-4  # mol/cm^3, surface value for [H] -- *ad-hoc* value
 
 # fixed reference values to keep time/lengthscales consistent in comparisons
@@ -109,7 +109,7 @@ h2s = h2 * h2
 hl = Lm / (m-1)
 hls = hl * hl
 
-dt = 50
+dt = 250
 tol = 1.0e-8
 
 # time step the system
@@ -197,10 +197,19 @@ while t < tmax:
                                 ]
                                 deriv_cg = (-3 * c2[0,m_i] + 4 * c2[1,m_i] - c2[2,m_i]) / (2 * h2 * x2d_nodes[j] ) 
 
+                    # When real
+
+                                # val += [-3 * D[j,m_i] / (2 * h2 * x2d_nodes[0]),   
+                                #         4 * D[j,m_i] / (2 * h2 * x2d_nodes[0]) - D3/L3,
+                                #         -D[j,m_i] / (2 * h2 * x2d_nodes[0])]
+                                # b += [D3 * (c2[j,m_i]-1) / L3 - D[j,m_i] * deriv_cg]
+
+                    # When glascott
+
                                 val += [-3 * D[j,m_i] / (2 * h2 * x2d_nodes[0]),   
-                                        4 * D[j,m_i] / (2 * h2 * x2d_nodes[0]) - D3/L3,
+                                        4 * D[j,m_i] / (2 * h2 * x2d_nodes[0]),
                                         -D[j,m_i] / (2 * h2 * x2d_nodes[0])]
-                                b += [D3 * (c2[j,m_i]-1) / L3 - D[j,m_i] * deriv_cg]
+                                b += [D3 * (-1) / L3 - D[j,m_i] * deriv_cg]
 
 
                             else:
@@ -558,7 +567,7 @@ while t < tmax:
         # metric_file.flush()
 
     # save every 100 steps
-    if step % 10 == 0:
+    if step % 5 == 0:
         print(
             f"Plot at t={t} tstar={t*(Lrefstar**2)/(Drefstar)} (sec) c_int={c2[0,0]} a_int={alpha[0,0]} c_end={c2[n2-2,0]} itn={iteration} computer_time ={time.time()-computer_t0}"
         )
@@ -566,11 +575,11 @@ while t < tmax:
         print('iterations : ',iteration)
 
         np.savetxt(
-            f"formal_work/data2D/k1e5/c2_401_{t:.2f}.dat",
+            f"formal_work/data2D/c2_correct{t:.2f}.dat",
             c2,
         )
         np.savetxt(
-            f"formal_work/data2D/k1e5/alpha_401_{t:.2f}.dat",
+            f"formal_work/data2D/alpha_correct{t:.2f}.dat",
             alpha,
         )
         # np.savetxt(

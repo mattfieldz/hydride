@@ -117,18 +117,18 @@ print('x scaling : ', Lrefstar)
 print('t scaling : ', tscaling)
 
 
-c2_spline = sp.interpolate.CubicSpline(c2_tot[:,0], (c2_tot[:,1]-cs ) * reactK**0.5)
-alpha_spline = sp.interpolate.CubicSpline(alpha_tot[:,0],alpha_tot[:,1])
+# c2_spline = sp.interpolate.CubicSpline(c2_tot[:,0], (c2_tot[:,1]-cs ) * reactK**0.5)
+# alpha_spline = sp.interpolate.CubicSpline(alpha_tot[:,0],alpha_tot[:,1])
 
-c2_gamma = sp.interpolate.CubicSpline(c2_tot[:,0], c2_tot[:,1]-cs)
+# c2_gamma = sp.interpolate.CubicSpline(c2_tot[:,0], c2_tot[:,1]-cs)
 
-roots = c2_gamma.roots(extrapolate=False)
-if len(roots) > 0:
-    Gamma_init = roots[0]
+# roots = c2_gamma.roots(extrapolate=False)
+# if len(roots) > 0:
+#     Gamma_init = roots[0]
 
-Gamma = reactK**0.5 * Gamma_init
+# Gamma = reactK**0.5 * Gamma_init
 
-x_nodes = np.linspace(0,Gamma_init,n2)
+# x_nodes = np.linspace(0,Gamma_init,n2)
 
 # c2 = c2_spline(x_nodes)
 # alpha = alpha_spline(x_nodes)
@@ -171,7 +171,7 @@ hydride_interface = []
 
 t_0 = np.zeros(n2)
 
-Gamma = 0.0000001
+Gamma = 0.0001
 
 D = D2 * np.ones(n2)
 
@@ -269,7 +269,9 @@ while t < tmax:
         t_list.append(t)
         Gamma_list.append(Gamma)
         print(alpha[0],t/(eps*reactK**0.5) * Lrefstar**2/Drefstar)
-        plt.plot(np.array(t_list)/(eps*reactK**0.5) * Lrefstar**2/Drefstar,1e7 * Lrefstar * np.array(Gamma_list)/reactK**0.5)
+        # plt.plot(np.array(t_list)/(eps*reactK**0.5) * Lrefstar**2/Drefstar,1e7 * Lrefstar * np.array(Gamma_list)/reactK**0.5)
+        plt.plot(Y_nodes,c2)
+
         plt.pause(0.01)
 
 

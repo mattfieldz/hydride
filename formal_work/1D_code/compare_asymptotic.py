@@ -184,7 +184,7 @@ plt.plot(t_dim05,numerics0_asy,color='red',linestyle='solid')
 # plt.plot(t_dim05,numerics10_asy,color='orange',linestyle='dashdot')
 # plt.plot(t_dim05,numerics15_asy,color='green',linestyle='dashdot')
 
-plt.plot(t_dim*k16**0.25*eps,numerics0_16,color='red',linestyle='dotted')
+# plt.plot(t_dim*k16**0.25*eps,numerics0_16,color='red',linestyle='dotted')
 # plt.plot(t_dim,numerics5_16,color='blue',linestyle='dotted')
 # plt.plot(t_dim,numerics10_16,color='orange',linestyle='dotted')
 # plt.plot(t_dim,numerics15_16,color='green',linestyle='dotted')

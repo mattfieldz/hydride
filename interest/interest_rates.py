@@ -4,11 +4,11 @@ import numpy as np
 def ISA_calculations(initial_ISA,initial_LISA,invest_month,years):
     # returns total_value
     # outputs total value, net_contributions, surplus
-    interest_rate = 0.1
+    interest_rate = 0.09
     government_contribution = 0.25
 
-    invest_LISA = invest_month * 0.5 
-    invest_ISA = invest_month * 0.5
+    invest_LISA = 100
+    invest_ISA = (invest_month-invest_LISA) 
 
 
     principle_ISA = initial_ISA
@@ -33,12 +33,12 @@ def ISA_calculations(initial_ISA,initial_LISA,invest_month,years):
     return total_value
 
 def income_calculations():
-    GTA_rate = 17.75
-    GTA_hours_semester = 36
-    GTA_yearly = GTA_rate * GTA_hours_semester
+    GTA_rate = 18
+    GTA_hours_semester = 60
+    GTA_yearly = GTA_rate * GTA_hours_semester * 2
     GTA_monthly = GTA_yearly / 12
 
-    STIPEND_monthly = 1603.08
+    STIPEND_monthly = 1690.08
 
     EXTERNAL_monthly = 500
 
@@ -46,8 +46,7 @@ def income_calculations():
     ADDITIONAL_AI_monthly = ADDITIONAL_AI_weekly * 4.3333333
 
     TOTAL_month = GTA_monthly + STIPEND_monthly + EXTERNAL_monthly + ADDITIONAL_AI_monthly
-
-    TOTAL_month = 35000 / 12
+    # TOTAL_month = 35000 / 12
 
     # print('income per month : ',TOTAL_month)
     # print('income per year : ',12*TOTAL_month)
@@ -63,7 +62,7 @@ def outcome_calculations(INCOME,invest):
             total_month = SKATES_YEAR / 12 + PLANET_ICE_FEES_WEEK * 4.333333 + COACHING_FEES_WEEK * 4.333333
             return total_month
         def archery():
-            bruntwood_year = 100
+            bruntwood_year = 0
             uni_year = 100
 
             total_month = (bruntwood_year + uni_year) / 12  
@@ -74,10 +73,10 @@ def outcome_calculations(INCOME,invest):
         return total_hobbies
     
     def utilities_rent():
-        rent_month = 700
-        virgin = 33.74
-        gas_electric = 65.70
-        water = 30 # tentative
+        rent_month = 500
+        virgin = 0
+        gas_electric = 40
+        water = 25 # tentative
         utilities = virgin + gas_electric + water
         total_month = rent_month + utilities
         return total_month
@@ -92,7 +91,7 @@ def outcome_calculations(INCOME,invest):
 
 
         week = fried_rice * 6 + pizza + sandwiches * 7
-
+        week = 50
 
         total_month = week*4.3333333
         return total_month
@@ -103,9 +102,9 @@ def outcome_calculations(INCOME,invest):
     return total_outcome_month
 
 INCOME = income_calculations()
-invest = 1500
+invest = 1000
 
-ISA_value = ISA_calculations(3000,0,invest,50) # 3 is length of PhD 
+ISA_value = ISA_calculations(5000,1000,invest,20) # 3 is length of PhD 
 OUTCOME = outcome_calculations(INCOME,invest)
 
 print('net income : ', INCOME)

@@ -564,11 +564,11 @@ while t < tmax:
         print('iterations : ',iteration)
 
         np.savetxt(
-            f"formal_work/data2D/k0/no_oxide/glascott/c2_401{t:.2f}.dat",
+            f"formal_work/data2D/k0/no_oxide/glascott/c2_with_reac{t:.2f}.dat",
             c2,
         )
         np.savetxt(
-            f"formal_work/data2D/k0/no_oxide/glascott/alpha{t:.2f}.dat",
+            f"formal_work/data2D/k0/no_oxide/glascott/alpha_with_reac{t:.2f}.dat",
             alpha,
         )
         # np.savetxt(

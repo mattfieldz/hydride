@@ -24,12 +24,12 @@ def x_from_X(X):
 #
 # discretisation
 
-n2 = 16001  # metal
+n2 = 4001  # metal
 # number of variables in the bulk
 nv = 3  # [H] and [U] in the bulk plus diffusivity of mixture
 
 # dimensional quantities : here approximated for room temp + some ad-hoc choices
-L2star = 1e3 * 1.0e-7  # bulk domain lengthscale 1000nm=1um
+L2star = 1e1 * 1e3 * 1.0e-7  # bulk domain lengthscale 1000nm=1um
 L3star = 20 * 1.0e-7  # oxide domain lengthscale 10nm
 D1star = 1.0e-13  # cm^2/s, diffusion of H in UH3  -- *ad hoc* value
 D2star = 1.49e-10  # cm^2/s, diffusion of H in U (room temp value)
@@ -75,8 +75,8 @@ D1 = D2
 cs = Csstar / Castar  # saturation value \in [0,1)
 eps = Castar / N2star  # relative forcing measure
 
-kstar = 1e12
-m = 3   # reaction order
+kstar = 2200
+m = 1   # reaction order
 
 reactK = (
     Lrefstar**2*N2star**m * eps**(m-1)/Drefstar * kstar  # ad-hoc value, SSI 2024 paper suggests 1.e^4-1.e^5 but based on 1nm scale!
@@ -118,7 +118,7 @@ print(f"Non-dimensional reaction constant ={reactK}")
 
 h2 = L2 / (Xmax*(n2 - 1))
 h2s = h2 * h2
-dt = 0.0001
+dt = 0.0000001
 tol = 1.0e-8
 threshold_alpha = 0.98
 
@@ -425,10 +425,10 @@ while t < tmax:
         asymptotics_length_hydride = np.array(t_list) * V_asymp
 
         plt.cla()
-        plt.plot(t_list,1e7 * Lrefstar * np.array(numerics_lenth_hydride),label='Numerical solution')
-        plt.plot(t_list,1e7 * asymptotics_length_hydride,label='Asymptotic solution')
+        plt.plot(t_list,1e4 * Lrefstar * np.array(numerics_lenth_hydride),label='Numerical solution')
+        plt.plot(t_list,1e4 * asymptotics_length_hydride,label='Asymptotic solution')
         plt.xlabel(r'$\text{time / }\mathrm{s}$')
-        plt.ylabel(r'$\text{Hydride thickness / }\mathrm{nm}$')
+        plt.ylabel(r'$\text{Hydride thickness / }\mathrm{\mu m}$')
         plt.legend()
         plt.pause(0.01)
 

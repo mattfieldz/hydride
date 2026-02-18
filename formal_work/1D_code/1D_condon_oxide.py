@@ -6,7 +6,7 @@ import scipy as sp
 # import deps.sp2petsc as petsc
 import sys
 from matplotlib import pyplot as plt
-
+import time 
 # some functions to remap coords
 def x_from_X(X):
     """Defines the (non-uniformly distributed) physical coordinate 'x'
@@ -24,27 +24,30 @@ def x_from_X(X):
 #
 # discretisation
 
-n2 = 4001  # metal
+n2 = 1001  # metal
 # number of variables in the bulk
 nv = 3  # [H] and [U] in the bulk plus diffusivity of mixture
 
 # dimensional quantities : here approximated for room temp + some ad-hoc choices
 L2star = 1e2 * 1e3 * 1.0e-7  # bulk domain lengthscale 1000nm=1um
-L3star = 20 * 1.0e-7  # oxide domain lengthscale 10nm
+L3star = 5 * 1.0e-7  # oxide domain lengthscale 10nm
 D1star = 1.0e-13  # cm^2/s, diffusion of H in UH3  -- *ad hoc* value
-D2star = 1.49e-10  # cm^2/s, diffusion of H in U (room temp value)
-D3star = 1.18e-12  # cm^2/s, diffusion of H in UO2 (room temp value)
+D2star = 2.19e-9  # cm^2/s, diffusion of H in U (room temp value)
+D3star = 3.86e-11  # cm^2/s, diffusion of H in UO2 (room temp value)
 N2star = 8.01e-2  # mol/cm^3, number density of U
-Csstar = 1.0e-5  # mol/cm^3, saturation [H] in U -- *ad-hoc* value
-Castar = 1.0e-4  # mol/cm^3, surface value for [H] -- *ad-hoc* value
+Csstar = 3.86e-9  # mol/cm^3, saturation [H] in U -- *ad-hoc* value
+Castar = 1.0e-7  # mol/cm^3, surface value for [H] -- *ad-hoc* value
 
 # fixed reference values to keep time/lengthscales consistent in comparisons
 # Lrefstar = 100 * 1e-7  # using 1um=1000nm here
 Lrefstar = L2star
 
-D_factor = 1
-D_large = 1
-Drefstar = D_factor * D2star # using the U value
+D_factor = 1000
+
+D_largestar = D_factor * D2star
+Drefstar = D_largestar * 1e1 # using the U value
+
+D_large = D_largestar / Drefstar
 
 # non-dimensional domains
 L3 = L3star / Lrefstar  # oxide
@@ -79,7 +82,7 @@ eps = Castar / N2star  # relative forcing measure
 
 
 
-kstar = 1e4
+kstar = 8.11e3
 m = 1   # reaction order
 
 reactK = (
@@ -115,7 +118,7 @@ print(f"Non-dimensional reaction constant ={reactK}")
 
 h2 = L2 / (Xmax*(n2 - 1))
 h2s = h2 * h2
-dt_standard = 0.00000003
+dt_standard = 0.0004
 dt = dt_standard
 tol = 1.0e-8
 threshold_alpha = 0.98
@@ -132,6 +135,8 @@ hydride_interface = []
 
 t_0 = np.zeros(n2)
 
+computer_time_zero = time.time()
+t_list = []
 while t < tmax:
     # evaluation at the new time step
     t += dt
@@ -407,23 +412,40 @@ while t < tmax:
         if iteration > 10:
             print('too many')
             print(residual)
+            sys.exit()
+
+
+        if step == 3000:
+            dt = dt_standard * 20
+
+        if step == 7000:
+            dt = dt_standard * 30
+
+
+            # L3star = 10nm
+        if step == 15000:
+            dt = dt_standard * 50 
+        # if step == 12000:
+        
+            # dt = dt_standard * 200
+    
     #   
     # Solution for this time step has converged
     #
 
     # measure the interface value of [H] and position of [alpha]=0.01
-    # if step % 10 == 0:
+    if step % 10 == 0:
         
         # find positions where [UH3] concentration is 99% in the bulk
-        # interpolated_alpha = sp.interpolate.CubicSpline(x2_nodes, alpha - threshold_alpha)
-        # interpolated_c2 = sp.interpolate.CubicSpline(x2_nodes, c2)
-        # roots = interpolated_alpha.roots(extrapolate=False)
-        # if len(roots) > 0:
-        #     hydride_interface.append(roots[0])
+        interpolated_alpha = sp.interpolate.CubicSpline(x2_nodes, alpha - threshold_alpha)
+        interpolated_c2 = sp.interpolate.CubicSpline(x2_nodes, c2 - cs)
+        roots = interpolated_c2.roots(extrapolate=False)
+        if len(roots) > 0:
+            hydride_interface.append(roots[0])
             
            
-        # else:
-        #     hydride_interface.append(0)
+        else:
+            hydride_interface.append(0)
         
         # OUTPUT:
         # non-dim time, dim time (sec), non-dim [H] @interface, non-dim [U] @interface, dim UH3 depth (nm)
@@ -433,22 +455,29 @@ while t < tmax:
         # metric_file.flush()
 
     # save every 100 steps
-    if step % 100 == 0:
+    if step % 1000 == 0:
         # print(
         #     f"Plot at t={t:.3f} tstar={t*tscaling:.3f} (sec) c_int={c2[0]:.6f} a_int={alpha[0]:.6f} int={Lrefstar*hydride_interface[int(step/10)-1]} V={Lrefstar*(hydride_interface[int(step/10)-1])/(dt*tscaling)} c_end={c2[n2-1]} D_int={D[0]*D_factor:.4f} itn={iteration}"
         # )
         print(
-                    f"Plot at t={t:.7f} tstar={t*tscaling:.3f} (sec) c_int={c2[0]:.6f} a_int={alpha[0]:.6f} c_end={c2[n2-1]} D_int={D[0]*D_factor:.4f} itn={iteration}"
+                    f"Plot at t={t:.7f} tstar={t*tscaling:.3f} (sec) c_int={c2[0]:.6f} a_int={alpha[0]:.6f} c_end={c2[n2-1]} D_int={D[0]*D_factor:.4f} gamma={1e7 * Lrefstar * hydride_interface[-1]} itn={iteration} time={time.time()-computer_time_zero}"
                 )
+        t_list.append(t)
+        t_array = np.array(t_list)
+        np.savetxt(f"formal_work/data1D/regime2a/tvalues_D1e3_5_75C.dat",
+                t_array,
+        )
+        
+
         # plt.plot(hydride_interface)
         # plt.pause(0.01)
 
         np.savetxt(
-            f"formal_work/data1D/c2_condon_oxide_no_threshold_D1e0{t:.7f}.dat",
+            f"formal_work/data1D/regime2a/c2_condon_oxide_D1e3_5_75C_{t:.7f}.dat",
             np.transpose(np.array([x2_nodes, c2])),
         )
         np.savetxt(
-            f"formal_work/data1D/alpha_condon_oxide_no_threshold_D1e0{t:.7f}.dat",
+            f"formal_work/data1D/regime2a/alpha_condon_oxide_D1e3_5_75C_{t:.7f}.dat",
             np.transpose(np.array([x2_nodes, alpha])),
         )
         # np.savetxt(

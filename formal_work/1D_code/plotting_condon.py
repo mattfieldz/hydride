@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 import numpy as np
-
+plt.style.use('formal_work/minorticks.mplstyle')
 alpha_varying = np.loadtxt(
     f"formal_work/data1D/c_xi_0_list_alpha_varying.dat",
     )
@@ -27,7 +27,7 @@ c_xi_m = m_varying[:,1]
 
 fig, axes = plt.subplots(1,1)
 
-# axes[0].plot(m_values,c_xi_m,label=r'$\alpha_c=0.98$, $c_s=0.1$')
+axes.plot(m_values,-c_xi_m,label=r'$\alpha_c=0.98$, $c_s=0.1$')
 # axes[1].plot(alpha_values,c_xi_alpha,label=r'$m=3$, $c_s=0.1$')
 # # axes[2].plot(cs_values,c_xi_cs,label=r'$\alpha_c=0.98$, $m=3$')
 
@@ -46,7 +46,7 @@ fig, axes = plt.subplots(1,1)
 # fig.tight_layout() 
 
 
-axes.plot(cs_values,c_xi_cs,label=r'$\alpha_c=0.98$, $m=1$')
+# axes.plot(cs_values,c_xi_cs,label=r'$\alpha_c=0.98$, $m=1$')
 
 import scipy as sp
 

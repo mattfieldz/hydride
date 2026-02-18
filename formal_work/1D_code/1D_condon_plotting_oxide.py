@@ -2,6 +2,9 @@ from matplotlib import pyplot as plt
 import numpy as np
 import scipy as sp
 
+plt.style.use('formal_work/minorticks.mplstyle')
+
+
 def x_from_X(X):
     """Defines the (non-uniformly distributed) physical coordinate 'x'
     in terms of the (uniformly distributed) computational coordinate
@@ -18,8 +21,10 @@ def x_from_X(X):
 
 dt = 0.003
 
+dt = 0.00003
+
 # t_values = [dt*i+0.00001 for i in range(1,int(29.40/dt))]
-t_values = [dt*i+0.00001 for i in range(1,int(0.2880/dt))]
+t_values = [dt*i+0.000000001 for i in range(1,int(0.0015/dt))]
 
 t_values = np.array(t_values)
 
@@ -37,7 +42,7 @@ Castar = 1.0e-4  # mol/cm^3, surface value for [H] -- *ad-hoc* value
 # Lrefstar = 100 * 1e-7  # using 1um=1000nm here
 Lrefstar = L2star
 
-D_factor = 1e2
+D_factor = 1
 
 Drefstar = D_factor * D2star  # using the U value
 
@@ -48,6 +53,8 @@ D_large = 1
 D1 = D1star/Drefstar
 D2 = D2star/Drefstar
 D3 = D3star/Drefstar
+
+
 
 # non-dimensional domains
 L3 = L3star / Lrefstar  # oxide
@@ -105,6 +112,9 @@ alpha_int = []
 alpha_int_D = []
 
 integral_quantity = [0,0]
+integral_quantity_D = [0,0]
+
+total_hydride = []
 
 c2_end = []
 c2_end_D = []
@@ -130,10 +140,10 @@ for t in t_values[0:-1]:
         alpha_prev = np.copy(c2)
     c += 1
     c2_tot = np.loadtxt(
-        f'formal_work/data1D/c2_condon_oxide_no_threshold{10*t:.3f}.dat',
+        f'formal_work/data1D/c2_condon_oxide_oxide_20{t:.7f}.dat',
         )
     alpha_tot = np.loadtxt(
-        f'formal_work/data1D/alpha_condon_oxide_no_threshold{10*t:.3f}.dat',
+        f'formal_work/data1D/alpha_condon_oxide_20{t:.7f}.dat',
         )
     
     x2_nodes = c2_tot[:,0]
@@ -144,16 +154,24 @@ for t in t_values[0:-1]:
     interpolated_c2 = sp.interpolate.CubicSpline(x2_nodes, c2-cs)
 
     just_alpha = sp.interpolate.CubicSpline(x2_nodes,alpha)
-
+    just_hydride = sp.interpolate.CubicSpline(x2_nodes,1-alpha)
 
     roots = interpolated_c2.roots(extrapolate=False)
     if len(roots) > 0:
-        hydride_interface.append(roots[0])
+        
         
         integral = just_alpha.integrate(0,roots[0])
+        hydride_integral = just_hydride.integrate(0,roots[0])
+
+        hydride_interface.append(roots[0])
         integral_quantity.append(integral)
+        total_hydride.append(hydride_integral)
+
     else:
         hydride_interface.append(0)
+        integral_quantity.append(0)
+        total_hydride.append(0)
+
     if step > 0:
         V.append(Lrefstar*((hydride_interface[step])-hydride_interface[step-1])/(dt*tscaling))
 
@@ -162,8 +180,8 @@ for t in t_values[0:-1]:
 
     c2_int.append(c2[0])
 
-    c2_tot_D = np.loadtxt(f"formal_work/data1D/c2_condon_oxide_no_threshold_D1e2{t:.4f}.dat")  
-    alpha_tot_D = np.loadtxt(f"formal_work/data1D/alpha_condon_oxide_no_threshold_D1e2{t:.4f}.dat")
+    c2_tot_D = np.loadtxt(f"formal_work/data1D/c2_condon_oxide_oxide_80{t:.7f}.dat")  
+    alpha_tot_D = np.loadtxt(f"formal_work/data1D/alpha_condon_oxide_80{t:.7f}.dat")
 
 
     x2_nodes = c2_tot_D[:,0]
@@ -175,10 +193,13 @@ for t in t_values[0:-1]:
     
     interpolated_c2_D = sp.interpolate.CubicSpline(x2_nodes, c2_D-cs)
     roots = interpolated_c2_D.roots(extrapolate=False)
+    just_alpha_D = sp.interpolate.CubicSpline(x2_nodes,alpha_D)
+
     if len(roots) > 0:
         hydride_interface_D.append(roots[0])
-        
-        
+        integral_D = just_alpha_D.integrate(0,roots[0])
+        integral_quantity_D.append(integral_D)
+
     else:
         hydride_interface_D.append(0)
 
@@ -329,8 +350,8 @@ Gamma_approx = np.sqrt(4* D_large / eps) * np.sqrt(np.log( D3 * (1-cs) / (L3) * 
                                                   *tau_values
                                                      + 0.5 * tau_values * (np.log(tau_values)-1) ) 
 
-plt.plot(t_values_dim,1e7 * Lrefstar * hydride_interface_arr,label='Numerics,D=1e3')
-plt.plot(t_values_dim,1e7 * Lrefstar * hydride_interface_arr_D,label='Numerics,D=1e2')
+# plt.plot(t_values_dim,1e7 * Lrefstar * hydride_interface_arr,label='Numerics,D=1e3')
+# plt.plot(t_values_dim,1e7 * Lrefstar * hydride_interface_arr_D,label='Numerics,D=1e2')
 # plt.plot(t_values_dim[0:-1],alpha_int,label='numerics alpha D1e3')
 # plt.plot(t_values_dim[0:-1],alpha_int_D,label='numerics alpha D1e2')
 
@@ -343,17 +364,40 @@ plt.plot(t_values_dim,1e7 * Lrefstar * hydride_interface_arr_D,label='Numerics,D
 # plt.plot(t_values_dim,1e4*Lrefstar * Gamma_approx * reactK**(-0.5))
 
 
-# plt.plot(t_values_dim,1e7 * Lrefstar * hydride_interface_arr_D)
-# plt.plot(t_values_dim, 1e7 * Lrefstar * (np.array(integral_quantity) + eps / 3 * (D3/L3 * (1-cs) * t_values-2*cs/(np.sqrt(np.pi))*np.sqrt(D2*t_values))),label='Asymptotic approximation')
-# plt.plot(t_values_dim, 1e7 * Lrefstar * (np.array(integral_quantity)))
+# plt.plot(t_values_dim,1e7 * Lrefstar * hydride_interface_arr,label='Numerical solution')
+# plt.plot(t_values_dim,1e7 * Lrefstar * hydride_interface_arr_D,label='Numerical solution 2')
+
+
+# plt.plot(t_values_dim, 1e7 * Lrefstar * (np.array(integral_quantity)[0:-1] + eps / 3 * (D3/L3 * (1-cs) * t_values-2*cs/(np.sqrt(np.pi))*np.sqrt(D2*t_values))),label='Asymptotic approximation',linestyle='dashed')
+
+
+
+
+plt.plot(t_values_dim[0:-1],(np.array(total_hydride)),label=r'Total hydride',linestyle='dashed')
+
+plt.plot(t_values_dim, t_values * eps / 3 * D3 * (1-cs) / L3,label='Flux in')
+
+plt.plot(t_values_dim, eps * 2 * cs / 3 * np.sqrt(D2 * t_values / np.pi),label='Flux out')
+
+plt.plot(t_values_dim,-eps * 2 * cs / 3 * np.sqrt(D2 * t_values / np.pi) + t_values * eps / 3 * D3/L3 * (1-cs),label='Difference of fluxes')
+
+# plt.plot(t_values_dim,eps / 3 * (D3/L3 * (1-cs) * t_values-2*cs/(np.sqrt(np.pi))*np.sqrt(D2*t_values)),label='Asymptotic approximation',linestyle='dashed')
+
+
+# plt.plot(t_values_dim[0:-1],c2_int)
+
+
+
+# plt.plot(t_values_dim, 1e7 * Lrefstar * (np.array(integral_quantity_D)[0:-1]))
+# plt.plot(t_values_dim[0:-1],alpha_int)
 # plt.plot(t_values[100:-1],np.array(c2_int[99:-1])-cs)
 # plt.plot(t_values[100:-1],(np.array(c2_int[99:-1])-np.array(c2_int[98:-2]))/(t_values[4]-t_values[3]))
 
 # plt.plot(t_values_dim,1e7 * Lrefstar * np.sqrt(2*eps*(1e-4)/(3*(1-threshold_alpha))*t_values))
 # plt.plot(Lrefstar * 1e7 * x2_nodes[0:100],alpha[0:100])
 
-plt.xlabel(r'$time^*/s$')
-plt.ylabel(r'Hydride thickness / nm$')
+plt.xlabel(r'time / s')
+plt.ylabel(r'Dimensionless quantities')
 
 
 plt.legend()

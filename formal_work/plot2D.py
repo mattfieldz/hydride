@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 # t_values = np.loadtxt('1Dexamples/2Ddata/tspace.dat')
-t_values = [1000*i+0.00001 for i in range(1,int(25))]
+t_values = [250*i+0.00001 for i in range(1,int(25))]
 t_values = np.array(t_values)
 
 n3 = 51
@@ -63,8 +63,8 @@ c2_deep = []
 t_c = 0
 for t in t_values:
     t_c += 1
-    c2 = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/c2_401_only_diff{t:.2f}.dat')
-    alpha = np.loadtxt(f'formal_work/data2D/k0/no_oxide/glascott/alpha{t:.2f}.dat')
+    c2 = np.loadtxt(f'formal_work/data2D/c2_{t:.2f}.dat')
+    alpha = np.loadtxt(f'formal_work/data2D/alpha_{t:.2f}.dat')
     # c2_1D = np.loadtxt(f'formal_work/data1D/k1e6/c2{t:.2f}.dat')
     # alpha_1D = np.loadtxt(f'formal_work/data1D/k1e6/alpha{t:.2f}.dat')
     axis[0,0].cla()
